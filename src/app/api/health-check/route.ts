@@ -1,3 +1,5 @@
-export function GET(_: Request) {
-  return new Response('OK', { status: 200 });
+import { OK } from "@/utils/response";
+
+export function GET() {
+  return OK();
 }
