@@ -1,30 +1,13 @@
 {
-  "name": "clarens-xtreme",
-  "version": "0.1.0",
+  "name": "clarens-xtreme-2",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "dev:watch": "next dev -H 0.0.0.0",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "lint:fix": "eslint --fix"
+  "version": "1.0.0",
+  "description": "Gear managment application for Clarens Xtreme",
+  "engines": {
+    "node": ">=20.14"
   },
-  "dependencies": {
-    "@supabase/ssr": "^0.12.6",
-    "@supabase/supabase-js": "^2.115.0",
-    "next": "16.3.4",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.4",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+  "workspaces": [
+    "./apps/*",
+    "./packages/*"
+  ]
 }
