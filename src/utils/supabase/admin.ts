@@ -1,0 +1,10 @@
+import { Database } from "@/models/types/database.types";
+import { createClient } from "@supabase/supabase-js";
+
+export function createAdminClient() {
+  return createClient<Database>(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
+}
