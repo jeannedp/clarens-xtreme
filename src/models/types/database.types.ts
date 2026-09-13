@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      config_types: {
+        Row: {
+          config_type_id: string
+          config_type_name: string
+          is_active: boolean
+        }
+        Insert: {
+          config_type_id?: string
+          config_type_name: string
+          is_active?: boolean
+        }
+        Update: {
+          config_type_id?: string
+          config_type_name?: string
+          is_active?: boolean
+        }
+        Relationships: []
+      }
+      configs: {
+        Row: {
+          config_description: string
+          config_id: string
+          config_name: string
+          config_type_id: string
+          config_value: Json | null
+          created_at: string
+        }
+        Insert: {
+          config_description: string
+          config_id?: string
+          config_name: string
+          config_type_id: string
+          config_value?: Json | null
+          created_at?: string
+        }
+        Update: {
+          config_description?: string
+          config_id?: string
+          config_name?: string
+          config_type_id?: string
+          config_value?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "config_config_type_id_fkey"
+            columns: ["config_type_id"]
+            isOneToOne: false
+            referencedRelation: "config_types"
+            referencedColumns: ["config_type_id"]
+          },
+        ]
+      }
       device_types: {
         Row: {
           device_type_id: string
@@ -229,13 +282,44 @@ export type Database = {
       }
       session_logs: {
         Row: {
+          device_id: string | null
           device_name: string | null
+          device_type_id: string | null
+          reader_id: string | null
           reader_name: string | null
           server_end: string | null
           server_start: string | null
           session_end: string | null
           session_start: string | null
           signal_strength: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_device_type_id_fkey"
+            columns: ["device_type_id"]
+            isOneToOne: false
+            referencedRelation: "device_types"
+            referencedColumns: ["device_type_id"]
+          },
+          {
+            foreignKeyName: "tracking_logs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["device_id"]
+          },
+          {
+            foreignKeyName: "tracking_logs_reader_id_fkey"
+            columns: ["reader_id"]
+            isOneToOne: false
+            referencedRelation: "readers"
+            referencedColumns: ["reader_id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          settings: Json | null
         }
         Relationships: []
       }

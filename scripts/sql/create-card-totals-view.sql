@@ -6,8 +6,11 @@
 --   - unknown     (not a heartbeat, but device_id and/or reader_id is null)
 --
 -- Session bucketing for known-gear rows reuses the same device_id/reader_id
--- + 15-minute-gap logic as public.session_logs, exposed here as session_key
--- so callers can COUNT(DISTINCT session_key) after filtering.
+-- + gap logic as public.session_logs (gap = the "Session Gap" config,
+-- minutes, latest row in public.configs by config_name, defaulting to 15 if
+-- unset — keep this in sync with create-session-logs-view.sql), exposed
+-- here as session_key so callers can COUNT(DISTINCT session_key) after
+-- filtering.
 --
 -- Intended usage from the dashboard (filter by date range on event_timestamp,
 -- reader_id, and/or device_type_id, then aggregate):
@@ -16,7 +19,20 @@
 --   total heartbeats = count(*) where is_heartbeat
 --   total unknown    = count(*) where is_unknown
 create or replace view public.card_totals_logs as
-with logs as (
+with (security_invoker = on) as
+with session_gap as (
+  select coalesce(
+    (
+      select (c.config_value #>> '{}')::numeric
+      from public.configs c
+      where c.config_name = 'Session Gap'
+      order by c.created_at desc
+      limit 1
+    ),
+    15
+  ) * interval '1 minute' as gap
+),
+logs as (
   select
     tl.tracking_log_id,
     tl.device_id,
@@ -43,7 +59,7 @@ sessions as (
         when l.device_id is null or l.reader_id is null then 0
         when l.reader_epc is not null and l.reader_epc = l.heartbeat_epc then 0
         when l.prev_event_timestamp is null
-          or l.event_timestamp - l.prev_event_timestamp >= interval '15 minutes'
+          or l.event_timestamp - l.prev_event_timestamp >= (select gap from session_gap)
         then 1
         else 0
       end

@@ -2,16 +2,34 @@
 -- session-derived timestamps.
 --
 -- A "session" is a run of consecutive logs for the same device+reader pair
--- where no gap between consecutive event_timestamp values is >= 15 minutes.
--- session_start/session_end are the event_timestamp bounds of that run;
--- server_start/server_end are the received_at values recorded on the same
--- rows as session_start/session_end (not just min/max(received_at)).
+-- where no gap between consecutive event_timestamp values is >= the "Session
+-- Gap" config (minutes, latest row in public.configs by config_name,
+-- defaulting to 15 if unset). session_start/session_end are the
+-- event_timestamp bounds of that run; server_start/server_end are the
+-- received_at values recorded on the same rows as session_start/session_end
+-- (not just min/max(received_at)).
 --
 -- device_id/reader_id/device_type_id are included (alongside the display
 -- names) so the dashboard can filter this view by gear, gear type, and
 -- reader the same way it filters card_totals_logs/rides_per_gear.
+--
+-- Keep this in sync with the identical session-gap logic in
+-- create-card-totals-view.sql.
 create or replace view public.session_logs as
-with logs as (
+with (security_invoker = on) as
+with session_gap as (
+  select coalesce(
+    (
+      select (c.config_value #>> '{}')::numeric
+      from public.configs c
+      where c.config_name = 'Session Gap'
+      order by c.created_at desc
+      limit 1
+    ),
+    15
+  ) * interval '1 minute' as gap
+),
+logs as (
   select
     tl.tracking_log_id,
     tl.device_id,
@@ -33,7 +51,7 @@ sessions as (
     sum(
       case
         when l.prev_event_timestamp is null
-          or l.event_timestamp - l.prev_event_timestamp >= interval '15 minutes'
+          or l.event_timestamp - l.prev_event_timestamp >= (select gap from session_gap)
         then 1
         else 0
       end

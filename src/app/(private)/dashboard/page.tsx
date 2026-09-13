@@ -28,7 +28,7 @@ import { getDashboard } from "@/actions/get-dashboard.action"
 import { getFilters } from "@/actions/get-filters.action"
 import type { DashboardFilters } from "@/actions/get-filters.action"
 import { getReaderLiveness } from "@/actions/get-reader-liveness.action"
-import type { ReaderLiveness as ReaderLivenessEntry } from "@/actions/get-reader-liveness.action"
+import type { ReaderLivenessResult } from "@/actions/get-reader-liveness.action"
 import { DashboardData } from "@/models/dto/dashboard.dto"
 
 const DAY = "yyyy-MM-dd"
@@ -43,7 +43,11 @@ export default function DashboardPage() {
   const [deviceTypeIds, setDeviceTypeIds] = React.useState<string[]>([])
   const [readerIds, setReaderIds] = React.useState<string[]>([])
   const [filters, setFilters] = React.useState<DashboardFilters | null>(null)
-  const [readerLiveness, setReaderLiveness] = React.useState<ReaderLivenessEntry[]>([])
+  const [readerLiveness, setReaderLiveness] = React.useState<ReaderLivenessResult>({
+    readers: [],
+    staleAfterMinutes: 60,
+    offlineAfterMinutes: 24 * 60,
+  })
   const [data, setData] = React.useState<DashboardData | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const requestId = React.useRef(0)
@@ -182,7 +186,11 @@ export default function DashboardPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {/* Reader liveness */}
-      <ReaderLivenessPanel readers={readerLiveness} />
+      <ReaderLivenessPanel
+        readers={readerLiveness.readers}
+        staleAfterMinutes={readerLiveness.staleAfterMinutes}
+        offlineAfterMinutes={readerLiveness.offlineAfterMinutes}
+      />
 
       {/* Headline cards */}
       <div className="flex flex-row flex-wrap gap-4 justify-between">
@@ -230,8 +238,8 @@ export default function DashboardPage() {
                 <TableRow key={`${s.deviceName}-${s.sessionStart}-${i}`}>
                   <TableCell>{s.deviceName}</TableCell>
                   <TableCell>{s.readerName}</TableCell>
-                  <TableCell>{format(new Date(s.sessionStart), "MMM d, HH:mm")}</TableCell>
-                  <TableCell>{format(new Date(s.sessionEnd), "MMM d, HH:mm")}</TableCell>
+                  <TableCell>{format(new Date(s.sessionStart), "MMM d, HH:mm:ss")}</TableCell>
+                  <TableCell>{format(new Date(s.sessionEnd), "MMM d, HH:mm:ss")}</TableCell>
                   <TableCell>{s.signalStrength?.toFixed(1) ?? "—"}</TableCell>
                   <TableCell className="text-right">{s.readCount}</TableCell>
                 </TableRow>

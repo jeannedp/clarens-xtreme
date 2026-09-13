@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/utils/supabase/admin";
+import { getSettings, type Settings } from "@/actions/get-settings.action";
 
 export interface ReaderLiveness {
   readerId: string;
@@ -9,15 +10,35 @@ export interface ReaderLiveness {
   lastSeenAt: string | null;
 }
 
-export async function getReaderLiveness(): Promise<ReaderLiveness[]> {
+export interface ReaderLivenessResult {
+  readers: ReaderLiveness[];
+  /** From the "Heartbeat Stale" config (minutes), across all config groups. */
+  staleAfterMinutes: number;
+  /** From the "Heartbeat Offline" config (minutes), across all config groups. */
+  offlineAfterMinutes: number;
+}
+
+const DEFAULT_STALE_MINUTES = 60;
+const DEFAULT_OFFLINE_MINUTES = 24 * 60;
+
+/** Configs aren't scoped to a single group here, so search every group for the name. */
+function findConfigMinutes(settings: Settings, configName: string, fallback: number): number {
+  for (const group of Object.values(settings)) {
+    const value = group[configName]?.value;
+    if (typeof value === "number") return value;
+  }
+  return fallback;
+}
+
+export async function getReaderLiveness(): Promise<ReaderLivenessResult> {
   const supabase = createAdminClient();
 
-  const { data: readers } = await supabase
-    .from("readers")
-    .select("reader_id, reader_name")
-    .order("reader_name");
+  const [{ data: readers }, settings] = await Promise.all([
+    supabase.from("readers").select("reader_id, reader_name").order("reader_name"),
+    getSettings(),
+  ]);
 
-  return Promise.all(
+  const readerLiveness = await Promise.all(
     (readers ?? []).map(async (r) => {
       const { data: latest } = await supabase
         .from("tracking_logs")
@@ -34,4 +55,10 @@ export async function getReaderLiveness(): Promise<ReaderLiveness[]> {
       };
     }),
   );
+
+  return {
+    readers: readerLiveness,
+    staleAfterMinutes: findConfigMinutes(settings, "Heartbeat Stale", DEFAULT_STALE_MINUTES),
+    offlineAfterMinutes: findConfigMinutes(settings, "Heartbeat Offline", DEFAULT_OFFLINE_MINUTES),
+  };
 }

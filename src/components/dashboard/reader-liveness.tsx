@@ -5,9 +5,6 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import type { ReaderLiveness as ReaderLivenessEntry } from "@/actions/get-reader-liveness.action"
 
-const ONE_HOUR_MS = 60 * 60 * 1000
-const ONE_DAY_MS = 24 * ONE_HOUR_MS
-
 export type ReaderLivenessStatus = "red" | "yellow" | "green"
 
 export const READER_LIVENESS_STATUS_DOT: Record<ReaderLivenessStatus, string> = {
@@ -16,16 +13,29 @@ export const READER_LIVENESS_STATUS_DOT: Record<ReaderLivenessStatus, string> = 
   green: "bg-green-500",
 }
 
-export function readerLivenessStatusOf(lastSeenAt: string | null, now: number): ReaderLivenessStatus {
+export function readerLivenessStatusOf(
+  lastSeenAt: string | null,
+  now: number,
+  staleAfterMinutes: number,
+  offlineAfterMinutes: number,
+): ReaderLivenessStatus {
   if (!lastSeenAt) return "red"
-  const age = now - new Date(lastSeenAt).getTime()
-  if (age > ONE_DAY_MS) return "red"
-  if (age > ONE_HOUR_MS) return "yellow"
+  const ageMinutes = (now - new Date(lastSeenAt).getTime()) / 60_000
+  if (ageMinutes > offlineAfterMinutes) return "red"
+  if (ageMinutes > staleAfterMinutes) return "yellow"
   return "green"
 }
 
-export function ReaderLiveness({ reader }: { reader: ReaderLivenessEntry }) {
-  const status = readerLivenessStatusOf(reader.lastSeenAt, Date.now())
+export function ReaderLiveness({
+  reader,
+  staleAfterMinutes,
+  offlineAfterMinutes,
+}: {
+  reader: ReaderLivenessEntry
+  staleAfterMinutes: number
+  offlineAfterMinutes: number
+}) {
+  const status = readerLivenessStatusOf(reader.lastSeenAt, Date.now(), staleAfterMinutes, offlineAfterMinutes)
 
   return (
     <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-1.5 text-[13px]">

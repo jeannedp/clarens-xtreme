@@ -1,21 +1,24 @@
 "use server";
 
 import { createAdminClient } from "@/utils/supabase/admin";
-import { SETTINGS, SettingsValues, defaultSettings } from "@/lib/settings";
+import { Json } from "@/models/types/database.types";
 
-const KNOWN = new Set<string>(SETTINGS.map((s) => s.key));
+export interface ConfigEntry {
+  value: Json;
+  description: string;
+}
 
-export async function getSettings(): Promise<SettingsValues> {
+/** `{ "<config type name>": { "<config name>": { value, description } } }` */
+export type Settings = Record<string, Record<string, ConfigEntry>>;
+
+export async function getSettings(): Promise<Settings> {
   const supabase = createAdminClient();
-  const { data } = await supabase.from("app_setting").select("key, value");
+  const { data, error } = await supabase.from("settings").select("settings").single();
 
-  const values = defaultSettings();
-  for (const row of data ?? []) {
-    if (!KNOWN.has(row.key)) continue;
-    const n = Number(row.value);
-    if (Number.isFinite(n)) {
-      values[row.key as keyof SettingsValues] = n;
-    }
+  if (error) {
+    console.error("getSettings:", error);
+    return {};
   }
-  return values;
+
+  return (data?.settings as Settings | null) ?? {};
 }

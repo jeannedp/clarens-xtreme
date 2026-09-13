@@ -19,7 +19,7 @@ export interface GetDashboardArgs {
   deviceIds?: string[];
   /** Device type ids to scope to. Applies to totals, rides-per-gear, and session logs. */
   deviceTypeIds?: string[];
-  /** Reader ids to scope to. Applies to totals and session logs (rides-per-gear/day have no reader dimension). */
+  /** Reader ids to scope to. Applies to totals, rides-per-gear, and session logs (rides-per-day has no device/reader dimension). */
   readerIds?: string[];
 }
 
@@ -59,6 +59,7 @@ export async function getDashboard(args: GetDashboardArgs): Promise<DashboardDat
     .lte("ride_day", args.to);
   if (args.deviceIds?.length) perGearQuery = perGearQuery.in("device_id", args.deviceIds);
   if (args.deviceTypeIds?.length) perGearQuery = perGearQuery.in("device_type_id", args.deviceTypeIds);
+  if (args.readerIds?.length) perGearQuery = perGearQuery.in("reader_id", args.readerIds);
 
   const [
     { count: totalHeartbeats },
@@ -95,8 +96,8 @@ export async function getDashboard(args: GetDashboardArgs): Promise<DashboardDat
   ]);
 
   // --- rides per gear ------------------------------------------------------
-  // rides_per_gear is grouped by day so it can be filtered by range; sum the
-  // days back together per gear here. View columns are nullable per Postgres
+  // rides_per_gear is grouped by day (and reader) so it can be filtered by
+  // range/reader; sum back together per gear here. View columns are nullable per Postgres
   // convention, but device_id/device_name/rides are never actually null.
   // Also the source of totalSessions/totalGear below: it's grouped down to
   // (device, day) already, so it never needs pagination like session_logs

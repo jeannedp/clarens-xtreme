@@ -14,12 +14,22 @@ import {
 } from "@/components/dashboard/reader-liveness"
 import type { ReaderLiveness as ReaderLivenessEntry } from "@/actions/get-reader-liveness.action"
 
-export function ReaderLivenessPanel({ readers }: { readers: ReaderLivenessEntry[] }) {
+export function ReaderLivenessPanel({
+  readers,
+  staleAfterMinutes,
+  offlineAfterMinutes,
+}: {
+  readers: ReaderLivenessEntry[]
+  staleAfterMinutes: number
+  offlineAfterMinutes: number
+}) {
   const [open, setOpen] = React.useState(false)
 
   const counts: Record<ReaderLivenessStatus, number> = { red: 0, yellow: 0, green: 0 }
   const now = Date.now()
-  for (const r of readers) counts[readerLivenessStatusOf(r.lastSeenAt, now)] += 1
+  for (const r of readers) {
+    counts[readerLivenessStatusOf(r.lastSeenAt, now, staleAfterMinutes, offlineAfterMinutes)] += 1
+  }
 
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border bg-background">
@@ -32,7 +42,14 @@ export function ReaderLivenessPanel({ readers }: { readers: ReaderLivenessEntry[
       </CollapsibleTrigger>
       <CollapsibleContent className="flex flex-row flex-wrap gap-2 px-3 pb-3">
         {readers.length ? (
-          readers.map((r) => <ReaderLiveness key={r.readerId} reader={r} />)
+          readers.map((r) => (
+            <ReaderLiveness
+              key={r.readerId}
+              reader={r}
+              staleAfterMinutes={staleAfterMinutes}
+              offlineAfterMinutes={offlineAfterMinutes}
+            />
+          ))
         ) : (
           <Empty>
             <EmptyHeader>
@@ -49,11 +66,17 @@ export function ReaderLivenessPanel({ readers }: { readers: ReaderLivenessEntry[
   )
 }
 
+const STATUS_LABEL: Record<ReaderLivenessStatus, string> = {
+  green: "online",
+  yellow: "stale",
+  red: "offline",
+}
+
 function StatusCount({ status, count }: { status: ReaderLivenessStatus; count: number }) {
   return (
     <span className="flex items-center gap-1 text-muted-foreground">
       <span className={cn("inline-block size-2 rounded-full", READER_LIVENESS_STATUS_DOT[status])} aria-hidden />
-      {count}
+      {count} <span className="hidden sm:inline">({STATUS_LABEL[status]})</span>
     </span>
   )
 }
