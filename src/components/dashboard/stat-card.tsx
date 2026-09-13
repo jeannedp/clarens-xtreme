@@ -12,9 +12,9 @@ export function StatCard({
   loading: boolean
 }) {
   return (
-    <Card className="flex-1 min-w-[180px] gap-0 border-t-4 border-t-chart-2 text-chart-1">
+    <Card className="flex-1 min-w-[180px] gap-0 text-chart-1">
       <CardHeader className="h-[30px]">
-        <CardTitle className="text-foreground">{title}</CardTitle>
+        <CardTitle className="font-bold text-chart-2">{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col text-[28px] font-bold">
         {value ?? (loading ? "…" : 0)}

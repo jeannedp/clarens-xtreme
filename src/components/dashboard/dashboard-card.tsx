@@ -17,9 +17,9 @@ export function DashboardCard({
   children: React.ReactNode
 }) {
   return (
-    <Card className={cn("gap-2 border-t-4 border-t-chart-2", className)}>
+    <Card className={cn("gap-2", className)}>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle className="font-bold text-chart-2">{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent className={contentClassName}>{children}</CardContent>

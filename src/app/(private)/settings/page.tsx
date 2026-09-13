@@ -27,9 +27,9 @@ export default async function SettingsPage(props: SettingsPageProps) {
     <div className="flex w-full max-w-[560px] flex-col gap-4">
       {types.length > 0 && <SettingsTypeSelect types={types} value={selectedType ?? ""} />}
 
-      <Card className="border-t-4 border-t-chart-2">
+      <Card>
         <CardHeader>
-          <CardTitle>{selectedType ?? "Settings"}</CardTitle>
+          <CardTitle className="font-bold text-chart-2">{selectedType ?? "Settings"}</CardTitle>
           <CardDescription>
             Saving adds a new entry rather than overwriting — previous values stay in history.
           </CardDescription>

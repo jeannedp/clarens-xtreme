@@ -34,7 +34,7 @@ export function ReaderLivenessPanel({
   return (
     <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border bg-background">
       <CollapsibleTrigger className="group flex w-full items-center gap-4 px-3 py-1.5 text-[13px]">
-        <span className="font-medium">Readers</span>
+        <span className="font-bold text-chart-2">Readers</span>
         <StatusCount status="green" count={counts.green} />
         <StatusCount status="yellow" count={counts.yellow} />
         <StatusCount status="red" count={counts.red} />
