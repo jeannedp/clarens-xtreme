@@ -15,7 +15,7 @@
 --
 -- Keep this in sync with the identical session-gap logic in
 -- create-card-totals-view.sql.
-create or replace view public.session_logs as
+create or replace view public.session_logs
 with (security_invoker = on) as
 with session_gap as (
   select coalesce(

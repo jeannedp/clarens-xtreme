@@ -8,7 +8,7 @@
 -- Bar graph usage: filter ride_day between :from and :to (and optionally
 -- device_type_id / reader_id), then group/sum by device_id (or device_name)
 -- on the client for the selected range.
-create or replace view public.rides_per_gear as
+create or replace view public.rides_per_gear
 with (security_invoker = on) as
 with rides as (
   select

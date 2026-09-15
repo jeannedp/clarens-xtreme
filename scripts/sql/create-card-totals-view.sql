@@ -18,7 +18,7 @@
 --   total gear       = count(distinct device_id) where device_id is not null
 --   total heartbeats = count(*) where is_heartbeat
 --   total unknown    = count(*) where is_unknown
-create or replace view public.card_totals_logs as
+create or replace view public.card_totals_logs
 with (security_invoker = on) as
 with session_gap as (
   select coalesce(

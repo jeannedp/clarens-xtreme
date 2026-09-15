@@ -15,7 +15,8 @@
     "db:pull": "supabase db pull",
     "db:reset": "supabase db reset",
     "gen:types": "supabase gen types typescript --linked --schema public > src/models/types/database.types.ts",
-    "import:hats": "node --env-file=.env scripts/import-hats.mjs"
+    "import:hats": "node --env-file=.env scripts/import-hats.mjs",
+    "keys:new": "node scripts/generate-supabase-keys.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

@@ -4,7 +4,7 @@
 --
 -- Bar graph usage: filter ride_day between :from and :to and plot directly
 -- (each row is already one bar).
-create or replace view public.rides_per_day as
+create or replace view public.rides_per_day
 with (security_invoker = on) as
 with rides as (
   select

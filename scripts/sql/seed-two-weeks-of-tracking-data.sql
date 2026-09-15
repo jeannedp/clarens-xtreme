@@ -1,6 +1,10 @@
 -- Seeds ~2 weeks of realistic tracking_logs + event_logs data for the
--- "Zipline" venue's live devices/readers (queried directly from production
--- at generation time — update the arrays below if the registry has changed).
+-- "Zipline" venue's devices/readers (originally queried from production at
+-- generation time — update the arrays below if the registry has changed).
+-- Also seeds that registry itself (device_types/devices/readers, on
+-- conflict do nothing) so this runs standalone against a fresh database
+-- created from create-all.sql, not only one already populated from
+-- production.
 --
 -- Devices (all one device type, "Helmet"):
 --   DEV-IOT-0010-9A .. DEV-IOT-0017-2H (3 Junior Helmets, 5 Senior Helmets)
@@ -44,6 +48,46 @@
 begin;
 
 select setseed(0.42);
+
+-- Registry (device_types, devices, readers) that the tracking_logs/event_logs
+-- rows below point to via FK, seeded here too so this script also works
+-- standalone against a freshly created database (scripts/sql/create-all.sql)
+-- and not only one pulled from production. on conflict do nothing keeps it
+-- re-runnable against a database that already has this registry.
+do $$
+declare
+  v_helmet_type_id uuid;
+begin
+  select device_type_id into v_helmet_type_id
+  from public.device_types where device_type_name = 'Helmet';
+
+  if v_helmet_type_id is null then
+    v_helmet_type_id := gen_random_uuid();
+    insert into public.device_types (device_type_id, device_type_name)
+    values (v_helmet_type_id, 'Helmet');
+  end if;
+
+  insert into public.devices (device_id, device_name, device_type_id)
+  select d.device_id, d.device_name, v_helmet_type_id
+  from (values
+    ('DEV-IOT-0010-9A', 'Junior Helmet 1'),
+    ('DEV-IOT-0011-8B', 'Junior Helmet 2'),
+    ('DEV-IOT-0012-7C', 'Junior Helmet 3'),
+    ('DEV-IOT-0013-6D', 'Senior Helmet 1'),
+    ('DEV-IOT-0014-5E', 'Senior Helmet 2'),
+    ('DEV-IOT-0015-4F', 'Senior Helmet 3'),
+    ('DEV-IOT-0016-3G', 'Senior Helmet 4'),
+    ('DEV-IOT-0017-2H', 'Senior Helmet 5')
+  ) as d(device_id, device_name)
+  on conflict (device_id) do nothing;
+
+  insert into public.readers (reader_id, reader_name, heartbeat_epc)
+  values
+    ('RDR-IOT-8843-C7', 'Zipline Main Gate', 'urn:epc:id:sgtin:0614141.100001.000000000103'),
+    ('RDR-IOT-8841-A9', 'Zipline Tree 1', 'urn:epc:id:sgtin:0614141.100001.000000000101'),
+    ('RDR-IOT-8842-B2', 'Zipline Tree 2', 'urn:epc:id:sgtin:0614141.100001.000000000102')
+  on conflict (reader_id) do nothing;
+end $$;
 
 do $$
 declare

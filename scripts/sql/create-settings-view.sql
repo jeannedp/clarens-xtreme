@@ -14,7 +14,7 @@
 -- jsonb_object_agg with no GROUP BY on the outermost query always collapses
 -- to exactly one row (an empty object if there are no configs at all,
 -- rather than no rows / null).
-create or replace view public.settings as
+create or replace view public.settings
 with (security_invoker = on) as
 with latest_configs as (
   select distinct on (c.config_type_id, c.config_name)
