@@ -22,6 +22,14 @@ async function handleRead(request: NextRequest) {
   const rssi = parseFloat(params.get("rssi")?.trim() ?? "");
   const datestamp = Date.parse(params.get("datestamp")?.trim() ?? "");
 
+  //TODO: Remove
+  console.log({
+    rfid,
+    id,
+    rssi,
+    datestamp
+  })
+
   const errors: string[] = [];
   if (!rfid) {
     errors.push('Missing query parameter: "rfid"');
