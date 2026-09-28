@@ -58,7 +58,7 @@ async function handleRead(request: NextRequest) {
 
     switch (type) {
       case "error":
-        return ServerError();
+        return ServerError(message);
 
       case "unknown_reader":
         const reason = `Unknown reader id "${id}"`;
@@ -70,7 +70,7 @@ async function handleRead(request: NextRequest) {
         return OK();
     }
   } catch (err) {
-    return ServerError();
+    return ServerError(err);
   }
 }
 

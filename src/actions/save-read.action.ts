@@ -29,6 +29,8 @@ export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveRea
     return { type: "unknown_reader" };
   }
 
+  console.log('Reader found');
+  
   const isHeartbeat = reader.heartbeat_epc === epc;
 
   // tracking_logs.device_id has a FK to devices, so an epc that isn't a
