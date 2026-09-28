@@ -35,6 +35,7 @@ async function handleRead(request: NextRequest) {
   }
 
   if (errors.length > 0) {
+    console.log(errors.join("\n"));
     await logRejectedRead(request, errors.join("\n"));
     return BadRequest(errors);
   }
@@ -67,25 +68,32 @@ async function handleRead(request: NextRequest) {
 
 function isAuthorised(request: NextRequest): boolean {
   const header = request.headers.get("authorization") ?? "";
+  if (!header){
+    console.log('No authorization header provided');
+  }
+  
   const [ method, encryptedToken ] = header.split(' ');
   if (!method || method !== 'Basic') {
+    console.log('Invalid authorization');
     return false;
   }
-
+  
   const appUsername = process.env.INGEST_BASIC_AUTH_USER;
   const appPassword = process.env.INGEST_BASIC_AUTH_PASS;
   if (!appUsername || !appPassword) {
+    console.log('Authorization values not configured');
     return false;
   }
 
   const token = Buffer.from(encryptedToken, "base64").toString("utf8");
   const separator = token.indexOf(":");
   if (separator === -1) {
+    console.log('Invalid authorization token structure');
     return false;
   }
 
   const [ username, password ] = token.split(':');
-  return username === appPassword && password === appPassword;
+  return username === appUsername && password === appPassword;
 }
 
 async function logRejectedRead(request: NextRequest, message: string) {
