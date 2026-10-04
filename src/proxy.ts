@@ -1,20 +1,22 @@
+import { isValidSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { DASHBOARD_COOKIE, isValidSession } from "@/lib/auth";
 
 const liveRoutes = [
   '/dashboard',
-  '/settings'
+  '/devices',
+  '/readers',
+  '/settings',
 ];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const authed = await isValidSession(request.cookies.get(DASHBOARD_COOKIE)?.value);
+  const isAuthorized = await isValidSession(request);
 
-  if (!authed && pathname !== "/login") {
+  if (!isAuthorized && pathname !== "/login") {
     return NextResponse.redirect(new URL("/login", request.url));
   }
   
-  if (authed && !liveRoutes.includes(pathname)) {
+  if (isAuthorized && !liveRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

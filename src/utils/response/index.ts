@@ -1,5 +1,18 @@
 import { NextResponse } from "next/server";
 
+export function File(body: string, contentType: string, filename: string): Response;
+export function File(body: ArrayBuffer, contentType: string, filename: string): Response;
+export function File(body: string | ArrayBuffer, contentType: string, filename: string): Response {
+  return new Response(body, {
+    headers: {
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+
 export function OK<T>(): NextResponse<T>;
 export function OK<T>(content: T): NextResponse<T>;
 export function OK<T>(content: string = 'OK') {

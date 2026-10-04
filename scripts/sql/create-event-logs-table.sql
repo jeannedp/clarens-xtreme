@@ -10,6 +10,7 @@ create table if not exists public.event_logs (
   description text not null,
   headers jsonb,
   query jsonb,
+  body jsonb,
   created_at timestamptz not null default now()
 );
 

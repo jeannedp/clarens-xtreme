@@ -4,18 +4,20 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:watch": "next dev -H 0.0.0.0",
+    "dev:lan": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:status": "supabase status",
     "db:new": "supabase migration new",
     "db:diff": "supabase db diff",
     "db:push": "supabase db push",
     "db:pull": "supabase db pull",
     "db:reset": "supabase db reset",
-    "gen:types": "supabase gen types typescript --linked --schema public > src/models/types/database.types.ts",
-    "import:hats": "node --env-file=.env scripts/import-hats.mjs",
+    "gen:types": "supabase gen types typescript --local --schema public > src/models/types/database.types.ts",
     "keys:new": "node scripts/generate-supabase-keys.mjs"
   },
   "dependencies": {

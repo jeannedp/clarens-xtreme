@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/actions/logout.action";
+import { APP_TITLE } from "@/constants";
 
 const TABS = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/devices', label: 'Devices' },
+  { href: '/readers', label: 'Readers' },
   { href: '/settings', label: 'Settings' },
 ];
 
@@ -17,8 +20,7 @@ export function Header() {
   return (
     <div className="relative z-10 flex flex-col shadow-md">
       <div className="flex flex-row items-center justify-between h-[70px] bg-[#153f34] px-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/CX-Email-Signature.png" alt="Clarens Xtreme" className="h-full py-2.5 w-auto object-contain" />
+        <img src="/app-logo.png" alt={APP_TITLE} className="h-full py-2.5 w-auto object-contain" />
         <form action={logout} className="text-white text-sm font-bold">
           <button className="cursor-pointer" type="submit">Sign out</button>
         </form>

@@ -7,78 +7,23 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   public: {
     Tables: {
-      config_types: {
-        Row: {
-          config_type_id: string
-          config_type_name: string
-          is_active: boolean
-        }
-        Insert: {
-          config_type_id?: string
-          config_type_name: string
-          is_active?: boolean
-        }
-        Update: {
-          config_type_id?: string
-          config_type_name?: string
-          is_active?: boolean
-        }
-        Relationships: []
-      }
-      configs: {
-        Row: {
-          config_description: string
-          config_id: string
-          config_name: string
-          config_type_id: string
-          config_value: Json | null
-          created_at: string
-        }
-        Insert: {
-          config_description: string
-          config_id?: string
-          config_name: string
-          config_type_id: string
-          config_value?: Json | null
-          created_at?: string
-        }
-        Update: {
-          config_description?: string
-          config_id?: string
-          config_name?: string
-          config_type_id?: string
-          config_value?: Json | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "config_config_type_id_fkey"
-            columns: ["config_type_id"]
-            isOneToOne: false
-            referencedRelation: "config_types"
-            referencedColumns: ["config_type_id"]
-          },
-        ]
-      }
       device_types: {
         Row: {
+          created_at: string
           device_type_id: string
           device_type_name: string
           is_active: boolean
         }
         Insert: {
+          created_at?: string
           device_type_id?: string
           device_type_name: string
           is_active?: boolean
         }
         Update: {
+          created_at?: string
           device_type_id?: string
           device_type_name?: string
           is_active?: boolean
@@ -87,18 +32,21 @@ export type Database = {
       }
       devices: {
         Row: {
+          created_at: string
           device_id: string
           device_name: string
           device_type_id: string
           is_active: boolean
         }
         Insert: {
+          created_at?: string
           device_id: string
           device_name: string
           device_type_id: string
           is_active?: boolean
         }
         Update: {
+          created_at?: string
           device_id?: string
           device_name?: string
           device_type_id?: string
@@ -116,6 +64,7 @@ export type Database = {
       }
       event_logs: {
         Row: {
+          body: Json | null
           created_at: string
           description: string
           event_log_id: string
@@ -125,6 +74,7 @@ export type Database = {
           source: string
         }
         Insert: {
+          body?: Json | null
           created_at?: string
           description: string
           event_log_id?: string
@@ -134,6 +84,7 @@ export type Database = {
           source: string
         }
         Update: {
+          body?: Json | null
           created_at?: string
           description?: string
           event_log_id?: string
@@ -146,22 +97,58 @@ export type Database = {
       }
       readers: {
         Row: {
+          created_at: string
           heartbeat_epc: string
           is_active: boolean
           reader_id: string
           reader_name: string
         }
         Insert: {
+          created_at?: string
           heartbeat_epc: string
           is_active?: boolean
           reader_id: string
           reader_name: string
         }
         Update: {
+          created_at?: string
           heartbeat_epc?: string
           is_active?: boolean
           reader_id?: string
           reader_name?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          heartbeat_offline: number
+          heartbeat_stale: number
+          min_session_duration: number
+          min_session_reads: number
+          session_gap: number
+          setting_id: string
+          setting_name: string
+          updated_at: string
+        }
+        Insert: {
+          heartbeat_offline?: number
+          heartbeat_stale?: number
+          min_session_duration?: number
+          min_session_reads?: number
+          session_gap?: number
+          setting_id?: string
+          setting_name: string
+          updated_at?: string
+        }
+        Update: {
+          heartbeat_offline?: number
+          heartbeat_stale?: number
+          min_session_duration?: number
+          min_session_reads?: number
+          session_gap?: number
+          setting_id?: string
+          setting_name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -212,120 +199,32 @@ export type Database = {
       }
     }
     Views: {
-      card_totals_logs: {
+      filters: {
         Row: {
-          device_id: string | null
-          device_type_id: string | null
-          event_timestamp: string | null
-          is_heartbeat: boolean | null
-          is_unknown: boolean | null
-          reader_id: string | null
-          received_at: string | null
-          session_key: string | null
-          tracking_log_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "devices_device_type_id_fkey"
-            columns: ["device_type_id"]
-            isOneToOne: false
-            referencedRelation: "device_types"
-            referencedColumns: ["device_type_id"]
-          },
-          {
-            foreignKeyName: "tracking_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["device_id"]
-          },
-          {
-            foreignKeyName: "tracking_logs_reader_id_fkey"
-            columns: ["reader_id"]
-            isOneToOne: false
-            referencedRelation: "readers"
-            referencedColumns: ["reader_id"]
-          },
-        ]
-      }
-      rides_per_day: {
-        Row: {
-          ride_day: string | null
-          rides: number | null
-        }
-        Relationships: []
-      }
-      rides_per_gear: {
-        Row: {
-          device_id: string | null
-          device_name: string | null
-          device_type_id: string | null
-          ride_day: string | null
-          rides: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "devices_device_type_id_fkey"
-            columns: ["device_type_id"]
-            isOneToOne: false
-            referencedRelation: "device_types"
-            referencedColumns: ["device_type_id"]
-          },
-          {
-            foreignKeyName: "tracking_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["device_id"]
-          },
-        ]
-      }
-      session_logs: {
-        Row: {
-          device_id: string | null
-          device_name: string | null
-          device_type_id: string | null
-          reader_id: string | null
-          reader_name: string | null
-          server_end: string | null
-          server_start: string | null
-          session_end: string | null
-          session_start: string | null
-          signal_strength: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "devices_device_type_id_fkey"
-            columns: ["device_type_id"]
-            isOneToOne: false
-            referencedRelation: "device_types"
-            referencedColumns: ["device_type_id"]
-          },
-          {
-            foreignKeyName: "tracking_logs_device_id_fkey"
-            columns: ["device_id"]
-            isOneToOne: false
-            referencedRelation: "devices"
-            referencedColumns: ["device_id"]
-          },
-          {
-            foreignKeyName: "tracking_logs_reader_id_fkey"
-            columns: ["reader_id"]
-            isOneToOne: false
-            referencedRelation: "readers"
-            referencedColumns: ["reader_id"]
-          },
-        ]
-      }
-      settings: {
-        Row: {
-          settings: Json | null
+          dates: Json | null
+          device_types: Json | null
+          devices: Json | null
+          readers: Json | null
         }
         Relationships: []
       }
     }
     Functions: {
-      [_ in never]: never
+      get_sessions: {
+        Args: { p_setting_id?: string }
+        Returns: {
+          device_id: string
+          device_name: string
+          device_type_id: string
+          device_type_name: string
+          reader_id: string
+          reader_name: string
+          session_end: string
+          session_start: string
+          signal_strength: number
+          total_reads: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
@@ -458,3 +357,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

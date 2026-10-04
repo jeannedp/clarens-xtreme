@@ -14,13 +14,14 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { RangeDatePicker } from "@/components/dashboard/range-date-picker"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { DashboardCard } from "@/components/dashboard/dashboard-card"
-import { SessionsPerGearChart } from "@/components/dashboard/sessions-per-gear-chart"
-import { RidesPerDayChart } from "@/components/dashboard/rides-per-day-chart"
+import { SessionsPerDeviceChart } from "@/components/dashboard/sessions-per-device-chart"
+import { SessionsPerDayChart } from "@/components/dashboard/sessions-per-day-chart"
 import { EmptyLine } from "@/components/dashboard/empty-line"
 import { MultiSelectFilter } from "@/components/dashboard/multi-select-filter"
 import { ReaderLivenessPanel } from "@/components/dashboard/reader-liveness-panel"
@@ -29,6 +30,8 @@ import { getFilters } from "@/actions/get-filters.action"
 import type { DashboardFilters } from "@/actions/get-filters.action"
 import { getReaderLiveness } from "@/actions/get-reader-liveness.action"
 import type { ReaderLivenessResult } from "@/actions/get-reader-liveness.action"
+import { getSettings } from "@/actions/get-settings.action"
+import type { Setting } from "@/actions/get-settings.action"
 import { DashboardData } from "@/models/dto/dashboard.dto"
 
 const DAY = "yyyy-MM-dd"
@@ -43,6 +46,8 @@ export default function DashboardPage() {
   const [deviceTypeIds, setDeviceTypeIds] = React.useState<string[]>([])
   const [readerIds, setReaderIds] = React.useState<string[]>([])
   const [filters, setFilters] = React.useState<DashboardFilters | null>(null)
+  const [settings, setSettings] = React.useState<Setting[] | null>(null)
+  const [settingId, setSettingId] = React.useState<string | null>(null)
   const [readerLiveness, setReaderLiveness] = React.useState<ReaderLivenessResult>({
     readers: [],
     staleAfterMinutes: 60,
@@ -55,24 +60,35 @@ export default function DashboardPage() {
   const pendingRange =
     date?.from && date?.to ? `${format(date.from, DAY)}..${format(date.to, DAY)}` : null
   const loadedRange = data ? `${data.range.from}..${data.range.to}` : null
-  const loading = pendingRange !== null && pendingRange !== loadedRange
+  const noSettings = settings !== null && settings.length === 0
+  const loading = !noSettings && pendingRange !== null && pendingRange !== loadedRange
 
   React.useEffect(() => {
     getFilters().then(setFilters, (err) => console.error(err))
+    getSettings().then(
+      (result) => {
+        setSettings(result)
+        setSettingId((current) => current ?? result[0]?.settingId ?? null)
+      },
+      (err) => console.error(err),
+    )
   }, [])
 
   React.useEffect(() => {
-    const refresh = () => getReaderLiveness().then(setReaderLiveness, (err) => console.error(err))
+    if (!settingId) return
+
+    const refresh = () => getReaderLiveness(settingId).then(setReaderLiveness, (err) => console.error(err))
     refresh()
     const id = setInterval(refresh, READER_LIVENESS_POLL_MS)
     return () => clearInterval(id)
-  }, [])
+  }, [settingId])
 
   React.useEffect(() => {
-    if (!date?.from || !date?.to) return
+    if (!settingId || !date?.from || !date?.to) return
 
     const id = ++requestId.current
     getDashboard({
+      settingId,
       from: format(date.from, DAY),
       to: format(date.to, DAY),
       deviceIds: deviceIds.length > 0 ? deviceIds : undefined,
@@ -90,11 +106,11 @@ export default function DashboardPage() {
         if (id === requestId.current) setError("Could not load dashboard data.")
       },
     )
-  }, [date, deviceIds, deviceTypeIds, readerIds])
+  }, [settingId, date, deviceIds, deviceTypeIds, readerIds])
 
-  const canExport = Boolean(date?.from && date?.to)
+  const canExport = Boolean(settingId && date?.from && date?.to)
   async function download(fmt: "csv" | "xlsx", dataset: "sessions" | "summary") {
-    if (!date?.from || !date?.to) return
+    if (!settingId || !date?.from || !date?.to) return
 
     try {
       const res = await fetch("/api/v1/export", {
@@ -103,8 +119,12 @@ export default function DashboardPage() {
         body: JSON.stringify({
           format: fmt,
           dataset,
+          settingId,
           from: format(date.from, DAY),
           to: format(date.to, DAY),
+          deviceIds,
+          deviceTypeIds,
+          readerIds,
         }),
       })
       if (!res.ok) throw new Error(`Export failed (${res.status})`)
@@ -145,7 +165,7 @@ export default function DashboardPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => download("csv", "summary")}>
                   <SquareTextIcon />
-                  Per gear / day
+                  Per device / day
                   <DropdownMenuShortcut>.csv</DropdownMenuShortcut>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => download("xlsx", "sessions")}>
@@ -159,22 +179,40 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-row flex-wrap gap-4 items-center">
+          <Select
+            items={(settings ?? []).map((s) => ({ value: s.settingId, label: s.settingName }))}
+            value={settingId}
+            onValueChange={(next) => {
+              if (next) setSettingId(next)
+            }}
+          >
+            <SelectTrigger className="w-[180px] bg-white hover:bg-white" aria-label="Settings profile">
+              <SelectValue placeholder="Settings profile" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              {(settings ?? []).map((s) => (
+                <SelectItem key={s.settingId} value={s.settingId}>
+                  {s.settingName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <MultiSelectFilter
-            options={(filters?.device ?? []).map((d) => ({ value: d.deviceId, label: d.name }))}
+            options={filters?.devices ?? []}
             value={deviceIds}
             onValueChange={setDeviceIds}
-            placeholder="All gear"
-            aria-label="Filter by gear"
+            placeholder="All devices"
+            aria-label="Filter by device"
           />
           <MultiSelectFilter
-            options={(filters?.deviceType ?? []).map((t) => ({ value: t.deviceTypeId, label: t.name }))}
+            options={filters?.deviceTypes ?? []}
             value={deviceTypeIds}
             onValueChange={setDeviceTypeIds}
-            placeholder="All gear types"
-            aria-label="Filter by gear type"
+            placeholder="All device types"
+            aria-label="Filter by device type"
           />
           <MultiSelectFilter
-            options={(filters?.reader ?? []).map((r) => ({ value: r.readerId, label: r.name }))}
+            options={filters?.readers ?? []}
             value={readerIds}
             onValueChange={setReaderIds}
             placeholder="All readers"
@@ -184,6 +222,9 @@ export default function DashboardPage() {
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {noSettings && (
+        <p className="text-sm text-red-600">No settings profile exists — add one before sessions can be calculated.</p>
+      )}
 
       {/* Reader liveness */}
       <ReaderLivenessPanel
@@ -194,25 +235,25 @@ export default function DashboardPage() {
 
       {/* Headline cards */}
       <div className="flex flex-row flex-wrap gap-4 justify-between">
-        <StatCard title="Total sessions" value={data?.totals.totalSessions} subtitle="Completed rides in range" loading={loading} />
-        <StatCard title="Total gear" value={data?.totals.totalGear} subtitle="Distinct gear used in range" loading={loading} />
+        <StatCard title="Total sessions" value={data?.totals.totalSessions} subtitle="Completed sessions in range" loading={loading} />
+        <StatCard title="Total devices" value={data?.totals.totalDevices} subtitle="Distinct devices used in range" loading={loading} />
         <StatCard title="Total heartbeats" value={data?.totals.totalHeartbeats} subtitle="Reader heartbeat pings in range" loading={loading} />
-        <StatCard title="Total unknown" value={data?.totals.totalUnknown} subtitle="Reads from unregistered gear or readers" loading={loading} />
+        <StatCard title="Total unknown" value={data?.totals.totalUnknown} subtitle="Reads from unregistered devices or readers" loading={loading} />
       </div>
 
-      {/* Sessions per gear / rides per day */}
+      {/* Sessions per device / sessions per day */}
       <div className="flex flex-row flex-wrap gap-4">
-        <DashboardCard title="Sessions per gear" className="flex-1 min-w-[300px]">
-          {data?.perGear.length ? (
-            <SessionsPerGearChart data={data.perGear.map((g) => ({ label: g.label, rides: g.rides }))} />
+        <DashboardCard title="Sessions per device" className="flex-1 min-w-[300px]">
+          {data?.perDevice.length ? (
+            <SessionsPerDeviceChart data={data.perDevice.map((g) => ({ label: g.label, sessions: g.sessions }))} />
           ) : (
             <EmptyLine loading={loading} />
           )}
         </DashboardCard>
 
-        <DashboardCard title="Rides per day" className="flex-1 min-w-[300px]">
+        <DashboardCard title="Sessions per day" className="flex-1 min-w-[300px]">
           {data?.perDay.length ? (
-            <RidesPerDayChart data={data.perDay.map((d) => ({ label: d.day, rides: d.rides }))} />
+            <SessionsPerDayChart data={data.perDay.map((d) => ({ label: d.day, sessions: d.sessions }))} />
           ) : (
             <EmptyLine loading={loading} />
           )}
@@ -224,7 +265,7 @@ export default function DashboardPage() {
         <Table>
           <TableHeader className="bg-chart-2 [&_th]:font-bold [&_th]:text-white!">
             <TableRow>
-              <TableHead>Gear</TableHead>
+              <TableHead>Device</TableHead>
               <TableHead>Reader</TableHead>
               <TableHead>Session start</TableHead>
               <TableHead>Session end</TableHead>
@@ -256,7 +297,7 @@ export default function DashboardPage() {
                       <EmptyDescription>
                         {loading
                           ? "Fetching session data for the selected range."
-                          : "Completed sessions will appear here once gear passes a reader in this range."}
+                          : "Completed sessions will appear here once a device passes a reader in this range."}
                       </EmptyDescription>
                     </EmptyHeader>
                   </Empty>

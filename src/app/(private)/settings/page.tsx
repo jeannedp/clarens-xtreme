@@ -1,79 +1,97 @@
+import { format } from "date-fns";
 import { SlidersHorizontalIcon } from "lucide-react";
 
 import { getSettings } from "@/actions/get-settings.action";
 import { updateSettings } from "@/actions/update-settings.action";
-import { SettingsTypeSelect } from "@/components/settings/settings-type-select";
+import { SettingsProfileSelect } from "@/components/settings/settings-profile-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { SETTING_FIELDS } from "@/constants";
 
 export const dynamic = "force-dynamic";
 
+const ERRORS: Record<string, string> = {
+  setting_name: "A profile name is required.",
+  exists: "A settings profile with that name already exists.",
+  save: "Could not save. Check the server logs.",
+};
+
 export interface SettingsPageProps {
-  searchParams: Promise<{ type?: string; saved?: string; error?: string }>;
+  searchParams: Promise<{ id?: string; saved?: string; error?: string }>;
 }
 
 export default async function SettingsPage(props: SettingsPageProps) {
-  const { type, saved, error } = await props.searchParams;
+  const { id, saved, error } = await props.searchParams;
   const settings = await getSettings();
 
-  const types = Object.keys(settings).sort();
-  const selectedType = type && settings[type] ? type : types[0];
-  const entries = selectedType ? Object.entries(settings[selectedType]) : [];
+  const setting = settings.find((s) => s.settingId === id) ?? settings[0];
+  const fieldError = SETTING_FIELDS.find((f) => f.name === error);
 
   return (
     <div className="flex w-full max-w-[560px] flex-col gap-4">
-      {types.length > 0 && <SettingsTypeSelect types={types} value={selectedType ?? ""} />}
+      {settings.length > 0 && (
+        <SettingsProfileSelect
+          items={settings.map((s) => ({ value: s.settingId, label: s.settingName }))}
+          value={setting?.settingId ?? ""}
+        />
+      )}
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-bold text-chart-2">{selectedType ?? "Settings"}</CardTitle>
-          <CardDescription>
-            Saving adds a new entry rather than overwriting — previous values stay in history.
-          </CardDescription>
+          <CardTitle className="font-bold text-chart-2">{setting?.settingName ?? "Settings"}</CardTitle>
+          {setting && (
+            <CardDescription>
+              Last updated {format(new Date(setting.updatedAt), "MMM d, yyyy HH:mm")}
+            </CardDescription>
+          )}
         </CardHeader>
 
         <CardContent>
-          {!selectedType || entries.length === 0 ? (
+          {!setting ? (
             <Empty>
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <SlidersHorizontalIcon />
                 </EmptyMedia>
-                <EmptyTitle>No settings in this group</EmptyTitle>
-                <EmptyDescription>Configs added to this group will show up here.</EmptyDescription>
+                <EmptyTitle>No settings profiles</EmptyTitle>
+                <EmptyDescription>Settings profiles added to the database will show up here.</EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
-            <form action={updateSettings} className="flex flex-col gap-4">
-              <input type="hidden" name="_configType" value={selectedType} />
+            <form key={setting.settingId} action={updateSettings} className="flex flex-col gap-4">
+              <input type="hidden" name="setting_id" value={setting.settingId} />
 
-              {entries.map(([name, config]) => (
-                <Field key={name} data-invalid={error === name || undefined}>
-                  <input type="hidden" name="_configName" value={name} />
-                  <input type="hidden" name={`description:${name}`} value={config.description} />
-                  <FieldLabel htmlFor={name}>{name}</FieldLabel>
+              <Field data-invalid={error === "setting_name" || error === "exists" || undefined}>
+                <FieldLabel htmlFor="setting_name">Profile Name</FieldLabel>
+                <Input id="setting_name" name="setting_name" defaultValue={setting.settingName} required />
+              </Field>
+
+              {SETTING_FIELDS.map((field) => (
+                <Field key={field.name} data-invalid={error === field.name || undefined}>
+                  <FieldLabel htmlFor={field.name}>{field.label}</FieldLabel>
                   <Input
-                    id={name}
-                    name={`config:${name}`}
+                    id={field.name}
+                    name={field.name}
                     type="number"
+                    min={0}
                     step={1}
-                    defaultValue={Number(config.value)}
+                    defaultValue={setting[toKey(field.name)]}
                     required
                   />
-                  <FieldDescription>{config.description}</FieldDescription>
+                  <FieldDescription>{field.description}</FieldDescription>
                 </Field>
               ))}
 
-              {error === "save" && (
-                <p className="text-sm text-red-600">Could not save. Check the server logs.</p>
-              )}
-              {error && error !== "save" && (
+              {fieldError && (
                 <p className="text-sm text-red-600">
-                  &ldquo;{error}&rdquo; must be a whole number — nothing was saved.
+                  &ldquo;{fieldError.label}&rdquo; must be a whole number of 0 or more — nothing was saved.
                 </p>
+              )}
+              {error && !fieldError && (
+                <p className="text-sm text-red-600">{ERRORS[error] ?? ERRORS.save}</p>
               )}
               {saved && <p className="text-sm text-chart-2">Saved.</p>}
 
@@ -87,3 +105,12 @@ export default async function SettingsPage(props: SettingsPageProps) {
     </div>
   );
 }
+
+/** session_gap -> sessionGap, matching the Setting DTO. */
+function toKey<T extends string>(name: T) {
+  return name.replace(/_(\w)/g, (_, c: string) => c.toUpperCase()) as SnakeToCamel<T>;
+}
+
+type SnakeToCamel<S extends string> = S extends `${infer H}_${infer T}`
+  ? `${H}${Capitalize<SnakeToCamel<T>>}`
+  : S;

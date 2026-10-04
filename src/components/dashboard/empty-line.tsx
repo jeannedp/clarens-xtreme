@@ -9,11 +9,11 @@ export function EmptyLine({ loading }: { loading: boolean }) {
         <EmptyMedia variant="icon">
           {loading ? <Loader2Icon className="animate-spin" /> : <FerrisWheelIcon />}
         </EmptyMedia>
-        <EmptyTitle>{loading ? "Loading…" : "No rides in this range"}</EmptyTitle>
+        <EmptyTitle>{loading ? "Loading…" : "No sessions in this range"}</EmptyTitle>
         <EmptyDescription>
           {loading
-            ? "Fetching ride data for the selected range."
-            : "Rides will appear here once gear is tracked by a reader in this range."}
+            ? "Fetching session data for the selected range."
+            : "Sessions will appear here once a device is tracked by a reader in this range."}
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

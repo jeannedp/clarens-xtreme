@@ -2,6 +2,7 @@ import { logEvent } from "@/actions/log-event.action";
 import { saveRead } from "@/actions/save-read.action";
 import { BadRequest, OK, ServerError, Unauthorized } from "@/utils/response";
 import { NextRequest } from "next/server";
+import { isApiAuthorized } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   return handleRead(request);
@@ -11,49 +12,60 @@ export async function POST(request: NextRequest) {
   return handleRead(request);
 }
 
+export async function PUT(request: NextRequest) {
+  return handleRead(request);
+}
+
 async function handleRead(request: NextRequest) {
-  if (!isAuthorised(request)) {
+  if (!isApiAuthorized(request)) {
     return Unauthorized();
   }
+  
+  let rfid: string | undefined;
+  let id: string | undefined;
+  let rssi: number;
+  let datestamp: number;
 
-  const params = request.nextUrl.searchParams;
-  const rfid = params.get("rfid")?.trim() ?? "";
-  const id = params.get("id")?.trim() ?? null;
-  const rssi = parseFloat(params.get("rssi")?.trim() ?? "");
-  const datestamp = Date.parse(params.get("datestamp")?.trim() ?? "");
+  if (request.bodyUsed) {
+    const json = await request.json();
 
-  //TODO: Remove
-  console.log({
-    rfid,
-    id,
-    rssi,
-    datestamp
-  })
+    rfid = json["rfid"]?.trim();
+    id = json["id"]?.trim();
+    rssi = parseFloat(json["rssi"]?.trim() ?? "");
+    datestamp = Date.parse(json["datestamp"]?.trim() ?? "");    
+  } else {
+    const params = request.nextUrl.searchParams;
+
+    rfid = params.get("rfid")?.trim();
+    id = params.get("id")?.trim();
+    rssi = parseFloat(params.get("rssi")?.trim() ?? "");
+    datestamp = Date.parse(params.get("datestamp")?.trim() ?? "");
+  }
 
   const errors: string[] = [];
   if (!rfid) {
-    errors.push('Missing query parameter: "rfid"');
+    errors.push('Missing query parameter: "rfid"'); 
   }
   if (!id) {
-    errors.push('Missing query parameter: "id"');
+    errors.push('Missing query parameter: "id"'); 
   }
-
-  if (Number.isNaN(rssi)) {    
-    errors.push('Query parameter "rssi" is not valid');
+  if (isNaN(rssi)) {
+    errors.push('Query parameter "rssi" is not valid'); 
   }
 
   if (errors.length > 0) {
-    console.log(errors.join("\n"));
-    await logRejectedRead(request, errors.join("\n"));
+    const errorLog = errors.join("\n");
+    console.log(errorLog);
+    await logRejectedRead(request, errorLog);
     return BadRequest(errors);
   }
 
   try {
     const { type, message } = await saveRead({
-      epc: rfid,
+      epc: rfid!,
       readerId: id!,
       rssi: rssi,
-      readerTimestamp: !datestamp ? null : new Date(datestamp).toISOString(),
+      readerTimestamp: isNaN(datestamp) ? null : new Date(datestamp).toISOString(),
     });
 
     switch (type) {
@@ -74,36 +86,6 @@ async function handleRead(request: NextRequest) {
   }
 }
 
-function isAuthorised(request: NextRequest): boolean {
-  const header = request.headers.get("authorization") ?? "";
-  if (!header){
-    console.log('No authorization header provided');
-  }
-  
-  const [ method, encryptedToken ] = header.split(' ');
-  if (!method || method !== 'Basic') {
-    console.log('Invalid authorization');
-    return false;
-  }
-  
-  const appUsername = process.env.INGEST_BASIC_AUTH_USER;
-  const appPassword = process.env.INGEST_BASIC_AUTH_PASS;
-  if (!appUsername || !appPassword) {
-    console.log('Authorization values not configured');
-    return false;
-  }
-
-  const token = Buffer.from(encryptedToken, "base64").toString("utf8");
-  const separator = token.indexOf(":");
-  if (separator === -1) {
-    console.log('Invalid authorization token structure');
-    return false;
-  }
-
-  const [ username, password ] = token.split(':');
-  return username === appUsername && password === appPassword;
-}
-
 async function logRejectedRead(request: NextRequest, message: string) {
   try {
     const headers: Record<string, string> = {};    
@@ -111,15 +93,16 @@ async function logRejectedRead(request: NextRequest, message: string) {
       if (key.toLowerCase() !== "authorization") {
         headers[key] = value;
       }
-    });   
+    });
 
     await logEvent({
       type: 'error',
       source: '/api/v1/read',
       description: 'Failed to persist rejected read.\n' + message,
       headers,
-      query: request.nextUrl.search
-    })
+      query: request.nextUrl.search,
+      body: await request.json(),
+    });
   } catch (err) {
     console.error("reads: ", err);
   }

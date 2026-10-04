@@ -5,8 +5,8 @@ import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 const chartConfig = {
-  rides: {
-    label: "Rides",
+  sessions: {
+    label: "Sessions",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig
@@ -30,15 +30,14 @@ function EdgeTick({ x, y, index, visibleTicksCount, payload }: EdgeTickProps) {
   )
 }
 
-export function RidesPerDayChart({ data }: { data: { label: string; rides: number }[] }) {
+export function SessionsPerDayChart({ data }: { data: { label: string; sessions: number }[] }) {
   return (
     <ChartContainer config={chartConfig} className="aspect-auto h-[220px] w-full">
       <BarChart data={data}>
         <CartesianGrid vertical={false} />
-        {/* every day still gets a tick mark; only the first/last get a label */}
         <XAxis dataKey="label" interval={0} tickLine axisLine={false} tick={<EdgeTick />} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="rides" fill="var(--color-rides)" radius={4} />
+        <Bar dataKey="sessions" fill="var(--color-sessions)" radius={4} />
       </BarChart>
     </ChartContainer>
   )

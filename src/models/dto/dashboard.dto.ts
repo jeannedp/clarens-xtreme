@@ -1,20 +1,20 @@
 export interface CardTotals {
   totalSessions: number;
-  totalGear: number;
+  totalDevices: number;
   totalHeartbeats: number;
   totalUnknown: number;
 }
 
-export interface PerGearCount {
+export interface PerDeviceCount {
   deviceId: string;
   label: string;
-  rides: number;
+  sessions: number;
 }
 
 export interface PerDayCount {
   /** Calendar day, `YYYY-MM-DD`. */
   day: string;
-  rides: number;
+  sessions: number;
 }
 
 export interface SessionLogRow {
@@ -23,15 +23,13 @@ export interface SessionLogRow {
   signalStrength: number | null;
   sessionStart: string;
   sessionEnd: string;
-  serverStart: string;
-  serverEnd: string;
   readCount: number;
 }
 
 export interface DashboardData {
   range: { from: string; to: string };
   totals: CardTotals;
-  perGear: PerGearCount[];
+  perDevice: PerDeviceCount[];
   perDay: PerDayCount[];
   sessionLogs: SessionLogRow[];
 }

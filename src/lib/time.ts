@@ -1,5 +1,5 @@
 /**
- * The venue is a single site in South Africa (SAST, UTC+2, no DST). Ride "days"
+ * The venue is a single site in South Africa (SAST, UTC+2, no DST). Session "days"
  * and "today" are reckoned in site-local time, not UTC or the viewer's browser
  * time. When multi-site support arrives this becomes per-reader config.
  */

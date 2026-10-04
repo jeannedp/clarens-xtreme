@@ -1,11 +1,11 @@
 "use server";
 
+import { COOKIE_NAME } from "@/constants";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { DASHBOARD_COOKIE } from "@/lib/auth";
 
 export async function logout() {
   const store = await cookies();
-  store.delete(DASHBOARD_COOKIE);
+  store.delete(COOKIE_NAME);
   redirect("/login");
 }

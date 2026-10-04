@@ -2,7 +2,7 @@ import { DashboardData } from "@/models/dto/dashboard.dto";
 import { siteClockOf, siteDayOf } from "@/lib/time";
 
 export interface SessionExportRow {
-  gear: string;
+  device: string;
   reader: string;
   date: string;
   time: string;
@@ -12,16 +12,16 @@ export interface SessionExportRow {
 }
 
 export interface SummaryExportRow {
-  gear: string;
+  device: string;
   date: string;
-  rides: number;
+  sessions: number;
 }
 
-/** One row per completed session (gear, reader, when, signal, read count). */
+/** One row per completed session (device, reader, when, signal, read count). */
 export function sessionExportRows(dash: DashboardData): SessionExportRow[] {
   return dash.sessionLogs
     .map((s) => ({
-      gear: s.deviceName,
+      device: s.deviceName,
       reader: s.readerName,
       date: siteDayOf(s.sessionStart),
       time: siteClockOf(s.sessionStart),
@@ -32,7 +32,7 @@ export function sessionExportRows(dash: DashboardData): SessionExportRow[] {
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 }
 
-/** Per gear, per day session counts. Rows with at least one session. */
+/** Per device, per day session counts. Rows with at least one session. */
 export function summaryExportRows(dash: DashboardData): SummaryExportRow[] {
   const counts = new Map<string, SummaryExportRow>();
   for (const s of dash.sessionLogs) {
@@ -40,13 +40,13 @@ export function summaryExportRows(dash: DashboardData): SummaryExportRow[] {
     const key = `${s.deviceName}-${date}`;
     const row = counts.get(key);
     if (row) {
-      row.rides += 1;
+      row.sessions += 1;
     } else {
-      counts.set(key, { gear: s.deviceName, date, rides: 1 });
+      counts.set(key, { device: s.deviceName, date, sessions: 1 });
     }
   }
   return [...counts.values()].sort(
-    (a, b) => a.gear.localeCompare(b.gear) || a.date.localeCompare(b.date),
+    (a, b) => a.device.localeCompare(b.device) || a.date.localeCompare(b.date),
   );
 }
 

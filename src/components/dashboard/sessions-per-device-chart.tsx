@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 const chartConfig = {
-  rides: {
+  sessions: {
     label: "Sessions",
     color: "var(--chart-1)",
   },
@@ -21,8 +21,8 @@ function ticksTo(max: number, step: number): number[] {
   return ticks
 }
 
-export function SessionsPerGearChart({ data }: { data: { label: string; rides: number }[] }) {
-  const maxValue = Math.max(0, ...data.map((d) => d.rides))
+export function SessionsPerDeviceChart({ data }: { data: { label: string; sessions: number }[] }) {
+  const maxValue = Math.max(0, ...data.map((d) => d.sessions))
   const domainMax = Math.max(MAJOR_STEP, Math.ceil((maxValue + 1) / MAJOR_STEP) * MAJOR_STEP)
   const majorTicks = ticksTo(domainMax, MAJOR_STEP)
   const minorTicks = ticksTo(domainMax, MINOR_STEP)
@@ -45,7 +45,7 @@ export function SessionsPerGearChart({ data }: { data: { label: string; rides: n
           />
           <YAxis type="category" dataKey="label" width={140} tickLine={false} axisLine={false} interval={0} />
           <ChartTooltip content={<ChartTooltipContent />} />
-          <Bar xAxisId="major" dataKey="rides" fill="var(--color-rides)" radius={4} barSize={18} />
+          <Bar xAxisId="major" dataKey="sessions" fill="var(--color-sessions)" radius={4} barSize={18} />
         </BarChart>
       </ChartContainer>
     </div>

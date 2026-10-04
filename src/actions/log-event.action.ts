@@ -6,6 +6,7 @@ export interface LogEvent {
   description: string;
   query: any;
   headers: any;
+  body: any;
 }
 
 export async function logEvent(logEvent: LogEvent) {
@@ -17,6 +18,7 @@ export async function logEvent(logEvent: LogEvent) {
     description: logEvent.description,
     query: logEvent.query,
     headers: logEvent.headers,
+    body: logEvent.body
   });
 
   if (error) {

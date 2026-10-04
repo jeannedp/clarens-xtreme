@@ -1,47 +1,55 @@
 "use server";
 
+import { FiltersView } from "@/models/types/filters.view.types";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export interface DashboardFilters {
-  device: { deviceId: string; name: string }[];
-  deviceType: { deviceTypeId: string; name: string }[];
-  reader: { readerId: string; name: string }[];
-  minDate: Date;
-  maxDate: Date;
+  devices: {
+    value: string;
+    label: string;
+  }[];
+  deviceTypes: {
+    value: string;
+    label: string;
+  }[];
+  readers: {
+    value: string;
+    label: string;
+  }[];
+  dates:{
+    min: Date;
+    max: Date;
+  };
 }
 
 export async function getFilters(): Promise<DashboardFilters> {
   const supabase = createAdminClient();
 
-  const [
-    { data: devices },
-    { data: deviceTypes },
-    { data: readers },
-    { data: oldest },
-    { data: newest },
-  ] = await Promise.all([
-    supabase.from("devices").select("device_id, device_name").order("device_name"),
-    supabase.from("device_types").select("device_type_id, device_type_name").order("device_type_name"),
-    supabase.from("readers").select("reader_id, reader_name").order("reader_name"),
-    supabase
-      .from("tracking_logs")
-      .select("event_timestamp")
-      .order("event_timestamp", { ascending: true })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("tracking_logs")
-      .select("event_timestamp")
-      .order("event_timestamp", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const { data: filters, error } = await supabase
+    .from("filters")
+    .select('*')
+    .maybeSingle()
+    .overrideTypes<FiltersView>();
 
+  if (!filters) {
+    return {
+      devices: [],
+      deviceTypes: [],
+      readers: [],
+      dates: {
+        min: new Date(),
+        max: new Date(),
+      },
+    }
+  }
+  
   return {
-    device: (devices ?? []).map((d) => ({ deviceId: d.device_id, name: d.device_name })),
-    deviceType: (deviceTypes ?? []).map((t) => ({ deviceTypeId: t.device_type_id, name: t.device_type_name })),
-    reader: (readers ?? []).map((r) => ({ readerId: r.reader_id, name: r.reader_name })),
-    minDate: oldest?.event_timestamp ? new Date(oldest.event_timestamp) : new Date(),
-    maxDate: newest?.event_timestamp ? new Date(newest.event_timestamp) : new Date(),
+    devices: filters.devices.map((d) => ({ value: d.id, label: d.name })),
+    deviceTypes: filters.device_types.map((dt) => ({ value: dt.id, label: dt.name })),
+    readers: filters.readers.map((r) => ({ value: r.id, label: r.name })),
+    dates: {
+      min: filters.dates?.min ? new Date(filters!.dates.min) : new Date(),
+      max: filters.dates?.max ? new Date(filters!.dates.max) : new Date(),
+    }
   };
 }

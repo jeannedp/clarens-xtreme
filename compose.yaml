@@ -1,15 +1,20 @@
 services:
   web:
     container_name: web
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     ports:
       - 3000:3000
+    env_file:
+      - path: .env
+      - path: .env.local
+        required: false
     environment:
       NODE_ENV: production
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
-      DASHBOARD_PASSCODE: ${DASHBOARD_PASSCODE}
-      INGEST_BASIC_AUTH_USER: ${INGEST_BASIC_AUTH_USER}
-      INGEST_BASIC_AUTH_PASS: ${INGEST_BASIC_AUTH_PASS}
+      # The Supabase CLI stack (`npm run db:start`) runs on the host, and
+      # 127.0.0.1 inside this container is the container itself — go via the
+      # host gateway instead. Set DOCKER_SUPABASE_URL to target another stack.
+      SUPABASE_URL: ${DOCKER_SUPABASE_URL:-http://host.docker.internal:54321}
+    extra_hosts:
+      - host.docker.internal:host-gateway

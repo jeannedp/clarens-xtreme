@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { APP_DESCRIPTION, APP_TITLE } from "@/constants";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Clarens Xtreme",
-  description: "Gear Tracker",
+  title: APP_TITLE,
+  description: APP_DESCRIPTION
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

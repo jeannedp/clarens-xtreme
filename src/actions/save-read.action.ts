@@ -5,14 +5,14 @@ export type SaveReadResult = {
   message?: string;
 };
 
-export interface SaveReadInput {
+export interface SaveReadArgs {
   epc: string;
   readerId: string;
   rssi: number;
   readerTimestamp: string | null;
 }
 
-export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveReadInput): Promise<SaveReadResult> {
+export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveReadArgs): Promise<SaveReadResult> {
   const supabase = createAdminClient();
 
   const { data: reader, error: readerError } = await supabase
@@ -28,13 +28,9 @@ export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveRea
   if (!reader) {
     return { type: "unknown_reader" };
   }
-
-  console.log('Reader found');
   
   const isHeartbeat = reader.heartbeat_epc === epc;
 
-  // tracking_logs.device_id has a FK to devices, so an epc that isn't a
-  // registered device must be stored as null rather than the raw epc value.
   let deviceId: string | null = null;
   if (!isHeartbeat) {
     const { data: device, error: deviceError } = await supabase
