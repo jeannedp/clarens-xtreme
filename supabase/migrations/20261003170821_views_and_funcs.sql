@@ -25,7 +25,8 @@ create or replace view public.filters
       select
         jsonb_agg(json_build_object(
           'id', reader_id,
-          'name', reader_name
+          'name', reader_name,
+          'setting_id', setting_id
         )) as readers
       from public.readers
     ),
@@ -40,9 +41,9 @@ create or replace view public.filters
     )
 
     select
-      all_devices.devices as devices,
-      all_device_types.device_types as device_types,
-      all_readers.readers as readers,
+      coalesce(all_devices.devices, '[]'::jsonb) as devices,
+      coalesce(all_device_types.device_types, '[]'::jsonb) as device_types,
+      coalesce(all_readers.readers, '[]'::jsonb) as readers,
       date_range.dates as dates
     from date_range
     cross join all_devices
@@ -50,6 +51,7 @@ create or replace view public.filters
     cross join all_readers;
 
 -- ----------------------------------------------------------- --
+-- get_sessions: only reads from readers in the given profile count.
 
 create or replace function public.get_sessions(p_setting_id uuid default null)
   returns table (
@@ -91,6 +93,7 @@ create or replace function public.get_sessions(p_setting_id uuid default null)
       where tl.device_id is not null
         and tl.event_timestamp is not null
         and tl.reader_epc is distinct from r.heartbeat_epc
+        and r.setting_id = p_setting_id
     ),
 
     numbered as (
@@ -129,7 +132,7 @@ create or replace function public.get_sessions(p_setting_id uuid default null)
     join public.devices d on d.device_id = n.device_id
     join public.readers r on r.reader_id = n.reader_id
     join public.device_types dt on dt.device_type_id = d.device_type_id
-    group by 
+    group by
       d.device_id, d.device_name,
       dt.device_type_id, dt.device_type_name,
       r.reader_id, r.reader_name,

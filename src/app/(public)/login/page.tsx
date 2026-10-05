@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { APP_TITLE } from "@/constants";
 
 export interface LoginPageProps {
   searchParams: Promise<{
@@ -33,7 +34,7 @@ export default async function LoginPage(props: LoginPageProps) {
           <CardHeader className="items-center text-center">
             <div className="mb-2 flex w-full items-center justify-center rounded-lg bg-gradient-to-b from-[#153f34] to-[#0a1f19] p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/CX-Email-Signature.png" alt="Clarens Xtreme" className="h-16 w-auto object-contain" />
+              <img src="/app-logo.png" alt={APP_TITLE} className="h-16 w-auto object-contain" />
             </div>
             <CardDescription>Enter the dashboard passcode to continue.</CardDescription>
           </CardHeader>

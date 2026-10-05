@@ -2,41 +2,26 @@
 
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { TablesUpdate } from "@/models/types/database.types";
-import { SETTING_FIELDS } from "@/constants";
+import { likeLiteral, parseSettingForm } from "@/lib/setting-form";
 
 export async function updateSettings(formData: FormData) {
   const settingId = String(formData.get("setting_id") ?? "");
-  const settingName = String(formData.get("setting_name") ?? "").trim();
   const back = `/settings?id=${encodeURIComponent(settingId)}`;
 
   if (!settingId) {
     redirect("/settings?error=save");
   }
 
-  if (!settingName) {
-    redirect(`${back}&error=setting_name`);
-  }
-
-  const update: TablesUpdate<"settings"> = {
-    setting_name: settingName,
-    updated_at: new Date().toISOString(),
-  };
-
-  for (const { name } of SETTING_FIELDS) {
-    const raw = String(formData.get(name) ?? "").trim();
-    const n = Number(raw);
-    if (raw === "" || !Number.isInteger(n) || n < 0) {
-      redirect(`${back}&error=${name}`);
-    }
-    update[name] = n;
+  const form = parseSettingForm(formData);
+  if (!form.ok) {
+    redirect(`${back}&error=${form.error}`);
   }
 
   const supabase = createAdminClient();
   const { data: existing } = await supabase
     .from("settings")
     .select("setting_id")
-    .ilike("setting_name", settingName.replace(/[\\%_]/g, "\\$&"))
+    .ilike("setting_name", likeLiteral(form.settingName))
     .neq("setting_id", settingId)
     .limit(1);
 
@@ -46,7 +31,11 @@ export async function updateSettings(formData: FormData) {
 
   const { error } = await supabase
     .from("settings")
-    .update(update)
+    .update({
+      setting_name: form.settingName,
+      ...form.values,
+      updated_at: new Date().toISOString(),
+    })
     .eq("setting_id", settingId);
 
   if (error) {

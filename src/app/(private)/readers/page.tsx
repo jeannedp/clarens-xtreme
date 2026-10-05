@@ -2,6 +2,7 @@ import { RadioTowerIcon } from "lucide-react";
 
 import { createReader } from "@/actions/create-reader.action";
 import { getReaders } from "@/actions/get-readers.action";
+import { getSettings } from "@/actions/get-settings.action";
 import { setReaderActive } from "@/actions/set-reader-active.action";
 import { updateReader } from "@/actions/update-reader.action";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
@@ -25,15 +27,23 @@ const NAME_ERRORS: Record<string, string> = {
 };
 
 export interface ReadersPageProps {
-  searchParams: Promise<{ saved?: string; error?: string; nameSaved?: string; nameError?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    error?: string;
+    nameSaved?: string;
+    profileSaved?: string;
+    nameError?: string;
+  }>;
 }
 
 export default async function ReadersPage(props: ReadersPageProps) {
-  const { saved, error, nameSaved, nameError } = await props.searchParams;
-  const readers = await getReaders();
+  const { saved, error, nameSaved, profileSaved, nameError } = await props.searchParams;
+  const [readers, settings] = await Promise.all([getReaders(), getSettings()]);
+
+  const settingItems = settings.map((s) => ({ value: s.settingId, label: s.settingName }));
 
   return (
-    <div className="flex w-full max-w-[800px] flex-col gap-4">
+    <div className="flex w-full flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle className="font-bold text-chart-2">New Reader</CardTitle>
@@ -41,7 +51,7 @@ export default async function ReadersPage(props: ReadersPageProps) {
 
         <CardContent>
           <form action={createReader} className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field>
                 <FieldLabel htmlFor="reader_id">Reader ID</FieldLabel>
                 <Input id="reader_id" name="reader_id" required />
@@ -53,6 +63,21 @@ export default async function ReadersPage(props: ReadersPageProps) {
               <Field>
                 <FieldLabel htmlFor="heartbeat_epc">Heartbeat EPC</FieldLabel>
                 <Input id="heartbeat_epc" name="heartbeat_epc" required />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="setting_id">Settings Profile</FieldLabel>
+                <Select name="setting_id" items={settingItems}>
+                  <SelectTrigger id="setting_id" className="w-full bg-white hover:bg-white">
+                    <SelectValue placeholder="No profile" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    {settingItems.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
             </div>
 
@@ -69,12 +94,16 @@ export default async function ReadersPage(props: ReadersPageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="font-bold text-chart-2">Readers</CardTitle>
-          <CardDescription>Disabled readers are kept for history but marked inactive.</CardDescription>
+          <CardDescription>
+            Disabled readers are kept for history but marked inactive. A reader&apos;s reads only count towards
+            its settings profile.
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-4">
           {nameError && <p className="text-sm text-red-600">{NAME_ERRORS[nameError] ?? NAME_ERRORS.save}</p>}
           {nameSaved && <p className="text-sm text-chart-2">Reader name saved.</p>}
+          {profileSaved && <p className="text-sm text-chart-2">Reader profile saved.</p>}
 
           {readers.length === 0 ? (
             <Empty>
@@ -94,6 +123,7 @@ export default async function ReadersPage(props: ReadersPageProps) {
                     <TableHead>ID</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Heartbeat EPC</TableHead>
+                    <TableHead>Profile</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead />
                   </TableRow>
@@ -119,6 +149,26 @@ export default async function ReadersPage(props: ReadersPageProps) {
                         </form>
                       </TableCell>
                       <TableCell>{r.heartbeatEpc}</TableCell>
+                      <TableCell>
+                        <form action={updateReader} className="flex flex-row items-center gap-2">
+                          <input type="hidden" name="reader_id" value={r.readerId} />
+                          <Select name="setting_id" items={settingItems} defaultValue={r.settingId}>
+                            <SelectTrigger className="w-[150px] bg-white hover:bg-white" aria-label="Settings profile">
+                              <SelectValue placeholder="Unassigned" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white">
+                              {settingItems.map((s) => (
+                                <SelectItem key={s.value} value={s.value}>
+                                  {s.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button type="submit" size="sm" variant="outline">
+                            Save
+                          </Button>
+                        </form>
+                      </TableCell>
                       <TableCell>{r.isActive ? "Active" : "Disabled"}</TableCell>
                       <TableCell className="text-right">
                         <form action={setReaderActive}>

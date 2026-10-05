@@ -148,7 +148,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 max-w-[960px] w-full">
+    <div className="flex flex-col gap-4 w-full">
       {/* Controls */}
       <div className="flex flex-col gap-4 w-full">
         <div className="flex flex-row flex-wrap gap-4 items-center justify-between">
@@ -183,7 +183,10 @@ export default function DashboardPage() {
             items={(settings ?? []).map((s) => ({ value: s.settingId, label: s.settingName }))}
             value={settingId}
             onValueChange={(next) => {
-              if (next) setSettingId(next)
+              if (!next) return
+              setSettingId(next)
+              // Readers belong to one profile, so a reader selection never carries over.
+              setReaderIds([])
             }}
           >
             <SelectTrigger className="w-[180px] bg-white hover:bg-white" aria-label="Settings profile">
@@ -212,7 +215,7 @@ export default function DashboardPage() {
             aria-label="Filter by device type"
           />
           <MultiSelectFilter
-            options={filters?.readers ?? []}
+            options={(filters?.readers ?? []).filter((r) => r.settingId === settingId)}
             value={readerIds}
             onValueChange={setReaderIds}
             placeholder="All readers"

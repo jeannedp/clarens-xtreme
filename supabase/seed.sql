@@ -44,11 +44,14 @@ begin
   ) as d(device_id, device_name)
   on conflict (device_id) do nothing;
 
-  insert into public.readers (reader_id, reader_name, heartbeat_epc)
-  values
+  insert into public.readers (reader_id, reader_name, heartbeat_epc, setting_id)
+  select r.reader_id, r.reader_name, r.heartbeat_epc, s.setting_id
+  from (values
     ('RDR-IOT-8843-C7', 'Zipline Main Gate', 'urn:epc:id:sgtin:0614141.100001.000000000103'),
     ('RDR-IOT-8841-A9', 'Zipline Tree 1', 'urn:epc:id:sgtin:0614141.100001.000000000101'),
     ('RDR-IOT-8842-B2', 'Zipline Tree 2', 'urn:epc:id:sgtin:0614141.100001.000000000102')
+  ) as r(reader_id, reader_name, heartbeat_epc)
+  cross join (select setting_id from public.settings where setting_name = 'Default') as s
   on conflict (reader_id) do nothing;
 end $$;
 

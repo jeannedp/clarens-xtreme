@@ -35,28 +35,40 @@ export async function getDashboard({
   const toUtc = siteDayEndUtc(to).toISOString();
 
   //#region Read counts
+  // Reads belong to their reader's settings profile, so only the profile's
+  // readers count (narrowed further by the reader filter, if any).
+  const { data: profileReaders, error: readersError } = await supabase
+    .from("readers")
+    .select("reader_id")
+    .eq("setting_id", settingId);
+
+  if (readersError) throw new Error(readersError.message);
+
+  const profileReaderIds = profileReaders.map((r) => r.reader_id);
+  const countReaderIds =
+    readerIds && readerIds.length > 0
+      ? profileReaderIds.filter((id) => readerIds.includes(id))
+      : profileReaderIds;
+
   // save-read.action.ts sets reader_epc only on heartbeats, and leaves
   // device_id null when the epc isn't a registered device. Neither kind of
-  // read has a device, so only the reader filter applies to these counts.
-  let heartbeatCountQuery = supabase
+  // read has a device, so only the reader scope applies to these counts.
+  const heartbeatCountQuery = supabase
     .from("tracking_logs")
     .select("*", { count: "exact", head: true })
     .not("reader_epc", "is", null)
     .gte("event_timestamp", fromUtc)
-    .lte("event_timestamp", toUtc);
+    .lte("event_timestamp", toUtc)
+    .in("reader_id", countReaderIds);
 
-  let unknownCountQuery = supabase
+  const unknownCountQuery = supabase
     .from("tracking_logs")
     .select("*", { count: "exact", head: true })
     .is("reader_epc", null)
     .is("device_id", null)
     .gte("event_timestamp", fromUtc)
-    .lte("event_timestamp", toUtc);
-
-  if (readerIds && readerIds.length > 0) {
-    heartbeatCountQuery = heartbeatCountQuery.in("reader_id", readerIds);
-    unknownCountQuery = unknownCountQuery.in("reader_id", readerIds);
-  }
+    .lte("event_timestamp", toUtc)
+    .in("reader_id", countReaderIds);
   //#endregion
 
   const [heartbeats, unknown, sessions] = await Promise.all([

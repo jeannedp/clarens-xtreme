@@ -22,8 +22,11 @@ create table if not exists public.readers (
   reader_name text not null,
   heartbeat_epc text not null,
   is_active boolean not null default true,
+  setting_id uuid references public.settings (setting_id) on delete set null,
   created_at timestamptz not null default now()
 );
+
+create index if not exists readers_setting_id_idx on public.readers (setting_id);
 
 alter table public.readers enable row level security;
 

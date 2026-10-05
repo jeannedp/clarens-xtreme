@@ -18,7 +18,7 @@ export async function updateDeviceType(formData: FormData) {
   if (nameField !== null) {
     const deviceTypeName = String(nameField).trim();
     if (!deviceTypeName) {
-      redirect("/devices?typeError=required");
+      redirect("/device-types?typeError=required");
     }
     update.device_type_name = deviceTypeName;
   }
@@ -28,7 +28,7 @@ export async function updateDeviceType(formData: FormData) {
   }
 
   if (!deviceTypeId || Object.keys(update).length === 0) {
-    redirect("/devices?typeError=save");
+    redirect("/device-types?typeError=save");
   }
 
   const supabase = createAdminClient();
@@ -42,7 +42,7 @@ export async function updateDeviceType(formData: FormData) {
       .limit(1);
 
     if (existing && existing.length > 0) {
-      redirect("/devices?typeError=exists");
+      redirect("/device-types?typeError=exists");
     }
   }
 
@@ -53,8 +53,8 @@ export async function updateDeviceType(formData: FormData) {
 
   if (error) {
     console.error("updateDeviceType: update failed", error);
-    redirect("/devices?typeError=save");
+    redirect("/device-types?typeError=save");
   }
 
-  redirect(nameField !== null ? "/devices?typeSaved=1" : "/devices");
+  redirect(nameField !== null ? "/device-types?typeSaved=1" : "/device-types");
 }

@@ -6,7 +6,7 @@ export default function PrivateLayout({ children }: LayoutProps<"/">) {
       <Header />
 
       <div className="flex flex-1 min-h-0 flex-row items-start overflow-y-auto p-6 bg-[#f1f3f0] justify-center">
-        {children}
+        <div className="w-full max-w-[1920px]">{children}</div>
       </div>
     </>
   );

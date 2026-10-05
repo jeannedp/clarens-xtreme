@@ -7,13 +7,15 @@ export interface Reader {
   readerName: string;
   heartbeatEpc: string;
   isActive: boolean;
+  settingId: string | null;
+  settingName: string | null;
 }
 
 export async function getReaders(): Promise<Reader[]> {
   const supabase = createAdminClient();
   const { data: readers, error } = await supabase
     .from("readers")
-    .select("*")
+    .select("*, settings(setting_name)")
     .order("is_active", { ascending: false })
     .order("reader_name");
 
@@ -27,5 +29,7 @@ export async function getReaders(): Promise<Reader[]> {
     readerName: r.reader_name,
     heartbeatEpc: r.heartbeat_epc,
     isActive: r.is_active,
+    settingId: r.setting_id,
+    settingName: r.settings?.setting_name ?? null,
   }));
 }

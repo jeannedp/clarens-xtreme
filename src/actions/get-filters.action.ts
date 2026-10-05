@@ -15,6 +15,7 @@ export interface DashboardFilters {
   readers: {
     value: string;
     label: string;
+    settingId: string | null;
   }[];
   dates:{
     min: Date;
@@ -46,7 +47,7 @@ export async function getFilters(): Promise<DashboardFilters> {
   return {
     devices: filters.devices.map((d) => ({ value: d.id, label: d.name })),
     deviceTypes: filters.device_types.map((dt) => ({ value: dt.id, label: dt.name })),
-    readers: filters.readers.map((r) => ({ value: r.id, label: r.name })),
+    readers: filters.readers.map((r) => ({ value: r.id, label: r.name, settingId: r.setting_id })),
     dates: {
       min: filters.dates?.min ? new Date(filters!.dates.min) : new Date(),
       max: filters.dates?.max ? new Date(filters!.dates.max) : new Date(),

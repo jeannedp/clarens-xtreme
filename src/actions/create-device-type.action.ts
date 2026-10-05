@@ -7,7 +7,7 @@ export async function createDeviceType(formData: FormData) {
   const deviceTypeName = String(formData.get("device_type_name") ?? "").trim();
 
   if (!deviceTypeName) {
-    redirect("/devices?typeError=required");
+    redirect("/device-types?typeError=required");
   }
 
   const supabase = createAdminClient();
@@ -18,7 +18,7 @@ export async function createDeviceType(formData: FormData) {
     .limit(1);
 
   if (existing && existing.length > 0) {
-    redirect("/devices?typeError=exists");
+    redirect("/device-types?typeError=exists");
   }
 
   const { error } = await supabase
@@ -27,8 +27,8 @@ export async function createDeviceType(formData: FormData) {
 
   if (error) {
     console.error("createDeviceType: insert failed", error);
-    redirect("/devices?typeError=save");
+    redirect("/device-types?typeError=save");
   }
 
-  redirect("/devices?typeSaved=1");
+  redirect("/device-types?typeSaved=1");
 }

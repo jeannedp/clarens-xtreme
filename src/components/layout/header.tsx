@@ -8,11 +8,12 @@ import { APP_TITLE } from "@/constants";
 const TABS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/devices', label: 'Devices' },
+  { href: '/device-types', label: 'Device Types' },
   { href: '/readers', label: 'Readers' },
   { href: '/settings', label: 'Settings' },
 ];
 
-const tabClass = 'grid place-content-center w-[100px] h-[35px] text-gray-500 text-sm font-bold text-center pt-[3px] border-b-[3px] border-white';
+const tabClass = 'grid place-content-center min-w-[100px] px-3 h-[35px] text-gray-500 text-sm font-bold text-center pt-[3px] border-b-[3px] border-white';
 
 export function Header() {
   const pathname = usePathname();

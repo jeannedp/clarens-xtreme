@@ -10,6 +10,7 @@ export interface FiltersView {
   readers: {
     id: string;
     name: string;
+    setting_id: string | null;
   }[];
   dates:{
     min: string;

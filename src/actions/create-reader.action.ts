@@ -7,6 +7,8 @@ export async function createReader(formData: FormData) {
   const readerId = String(formData.get("reader_id") ?? "").trim();
   const readerName = String(formData.get("reader_name") ?? "").trim();
   const heartbeatEpc = String(formData.get("heartbeat_epc") ?? "").trim();
+  // Optional: a reader without a profile is not counted on the dashboard.
+  const settingId = String(formData.get("setting_id") ?? "").trim() || null;
 
   if (!readerId || !readerName || !heartbeatEpc) {
     redirect("/readers?error=required");
@@ -17,6 +19,7 @@ export async function createReader(formData: FormData) {
     reader_id: readerId,
     reader_name: readerName,
     heartbeat_epc: heartbeatEpc,
+    setting_id: settingId,
   });
 
   if (error) {

@@ -22,7 +22,7 @@ export async function getReaderLiveness(settingId: string): Promise<ReaderLivene
   const supabase = createAdminClient();
 
   const [{ data: readers }, setting] = await Promise.all([
-    supabase.from("readers").select("reader_id, reader_name").order("reader_name"),
+    supabase.from("readers").select("reader_id, reader_name").eq("setting_id", settingId).order("reader_name"),
     getSetting(settingId),
   ]);
 

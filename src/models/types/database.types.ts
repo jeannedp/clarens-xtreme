@@ -102,6 +102,7 @@ export type Database = {
           is_active: boolean
           reader_id: string
           reader_name: string
+          setting_id: string | null
         }
         Insert: {
           created_at?: string
@@ -109,6 +110,7 @@ export type Database = {
           is_active?: boolean
           reader_id: string
           reader_name: string
+          setting_id?: string | null
         }
         Update: {
           created_at?: string
@@ -116,8 +118,17 @@ export type Database = {
           is_active?: boolean
           reader_id?: string
           reader_name?: string
+          setting_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "readers_setting_id_fkey"
+            columns: ["setting_id"]
+            isOneToOne: false
+            referencedRelation: "settings"
+            referencedColumns: ["setting_id"]
+          },
+        ]
       }
       settings: {
         Row: {

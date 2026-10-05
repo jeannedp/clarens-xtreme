@@ -13,32 +13,38 @@ export const DAY_FORMAT = "yyyy-MM-dd";
 
 //  Settings
 // Editable numeric columns of public.settings, in display order. Shared by
-// the settings page (labels) and update-settings.action.ts (validation).
+// the settings page (labels, defaults for new profiles) and
+// src/lib/setting-form.ts (validation).
 export const SETTING_FIELDS = [
   {
     name: "session_gap",
     label: "Session Gap",
     description: "Minutes without a read before the next read starts a new session.",
+    defaultValue: 15,
   },
   {
     name: "heartbeat_stale",
     label: "Heartbeat Stale",
     description: "Minutes since a reader was last seen before it is marked stale.",
+    defaultValue: 60,
   },
   {
     name: "heartbeat_offline",
     label: "Heartbeat Offline",
     description: "Minutes since a reader was last seen before it is marked offline.",
+    defaultValue: 1440,
   },
   {
     name: "min_session_duration",
     label: "Minimum Session Duration",
     description: "Shortest a session can last, in seconds, to be counted.",
+    defaultValue: 0,
   },
   {
     name: "min_session_reads",
     label: "Minimum Session Reads",
     description: "Fewest reads a session needs to be counted.",
+    defaultValue: 0,
   },
 ] as const;
 

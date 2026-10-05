@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const liveRoutes = [
   '/dashboard',
   '/devices',
+  '/device-types',
   '/readers',
   '/settings',
 ];
