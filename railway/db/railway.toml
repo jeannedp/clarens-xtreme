@@ -1,0 +1,12 @@
+# Supabase Postgres. Railway service name: db
+# Service settings → Config-as-code → Railway config file: /railway/db/railway.toml
+# Requires a volume mounted at /var/lib/postgresql/data (see railway/README.md).
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "railway/db/Dockerfile"
+watchPatterns = ["/railway/db/**"]
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

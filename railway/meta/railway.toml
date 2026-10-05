@@ -1,0 +1,11 @@
+# postgres-meta. Railway service name: meta
+# Service settings → Config-as-code → Railway config file: /railway/meta/railway.toml
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "railway/meta/Dockerfile"
+watchPatterns = ["/railway/meta/**"]
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

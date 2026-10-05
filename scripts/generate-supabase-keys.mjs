@@ -11,12 +11,20 @@ function makeJWT(payload, secret) {
   return header + '.' + body + '.' + signature;
 }
 
-const jwtSecret = crypto.randomBytes(32).toString('hex');
+// Hex only, so values are safe to embed in connection URIs.
+const secret = (bytes) => crypto.randomBytes(bytes).toString('hex');
+
+const jwtSecret = secret(32);
 const anonKey = makeJWT({ role: 'anon', iss: 'supabase', iat: 1700000000, exp: 2000000000 }, jwtSecret);
 const serviceKey = makeJWT({ role: 'service_role', iss: 'supabase', iat: 1700000000, exp: 2000000000 }, jwtSecret);
 
-console.log('\n================ SUPABASE KEYS ================');
-console.log('\nJWT_SECRET:\n' + jwtSecret);
-console.log('\nANON_KEY:\n' + anonKey);
-console.log('\nSERVICE_ROLE_KEY:\n' + serviceKey);
+// Paste this block into Railway → Project Settings → Shared Variables → Raw Editor.
+console.log('\n================ SUPABASE KEYS ================\n');
+console.log(`POSTGRES_PASSWORD=${secret(24)}`);
+console.log(`JWT_SECRET=${jwtSecret}`);
+console.log(`ANON_KEY=${anonKey}`);
+console.log(`SERVICE_ROLE_KEY=${serviceKey}`);
+console.log(`PG_META_CRYPTO_KEY=${secret(32)}`);
+console.log(`DASHBOARD_USERNAME=supabase`);
+console.log(`DASHBOARD_PASSWORD=${secret(16)}`);
 console.log('\n===============================================');

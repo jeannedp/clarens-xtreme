@@ -12,7 +12,7 @@ RUN npm run build
 FROM node:24-alpine AS serve
 WORKDIR /app
   
-ENV NODE_END=production
+ENV NODE_ENV=production
 
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/.next ./.next

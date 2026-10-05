@@ -1,0 +1,13 @@
+# Supabase Studio. Railway service name: studio
+# Service settings → Config-as-code → Railway config file: /railway/studio/railway.toml
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "railway/studio/Dockerfile"
+watchPatterns = ["/railway/studio/**"]
+
+[deploy]
+healthcheckPath = "/api/platform/profile"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

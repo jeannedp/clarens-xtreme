@@ -1,0 +1,11 @@
+# Kong API gateway. Railway service name: kong
+# Service settings → Config-as-code → Railway config file: /railway/kong/railway.toml
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "railway/kong/Dockerfile"
+watchPatterns = ["/railway/kong/**"]
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

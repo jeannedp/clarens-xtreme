@@ -1,0 +1,78 @@
+# Trimmed from supabase/docker volumes/api/kong.yml — only the routes this
+# project uses (no auth/storage/realtime/functions).
+# $VARS are substituted from the environment by kong-entrypoint.sh at boot.
+_format_version: '2.1'
+_transform: true
+
+consumers:
+  - username: DASHBOARD
+  - username: anon
+    keyauth_credentials:
+      - key: $SUPABASE_ANON_KEY
+  - username: service_role
+    keyauth_credentials:
+      - key: $SUPABASE_SERVICE_KEY
+
+acls:
+  - consumer: anon
+    group: anon
+  - consumer: service_role
+    group: admin
+
+basicauth_credentials:
+  - consumer: DASHBOARD
+    username: '$DASHBOARD_USERNAME'
+    password: '$DASHBOARD_PASSWORD'
+
+services:
+  - name: rest-v1
+    _comment: 'PostgREST: /rest/v1/* -> rest/*'
+    url: $REST_UPSTREAM
+    routes:
+      - name: rest-v1-all
+        strip_path: true
+        paths:
+          - /rest/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+            - anon
+
+  - name: meta
+    _comment: 'pg-meta: /pg/* -> meta/*'
+    url: $META_UPSTREAM
+    routes:
+      - name: meta-all
+        strip_path: true
+        paths:
+          - /pg/
+    plugins:
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow:
+            - admin
+
+  - name: dashboard
+    _comment: 'Studio: /* -> studio/*'
+    url: $STUDIO_UPSTREAM
+    routes:
+      - name: dashboard-all
+        strip_path: true
+        paths:
+          - /
+    plugins:
+      - name: cors
+      - name: basic-auth
+        config:
+          hide_credentials: true
