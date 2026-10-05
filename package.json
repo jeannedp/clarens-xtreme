@@ -17,6 +17,7 @@
     "db:push": "supabase db push",
     "db:pull": "supabase db pull",
     "db:reset": "supabase db reset",
+    "db:migrate": "supabase db push --db-url \"$DATABASE_URL\" --yes",
     "gen:types": "supabase gen types typescript --local --schema public > src/models/types/database.types.ts",
     "keys:new": "node scripts/generate-supabase-keys.mjs"
   },

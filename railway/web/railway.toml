@@ -14,10 +14,16 @@ watchPatterns = [
   "/postcss.config.mjs",
   "/components.json",
   "/Dockerfile",
+  "/supabase/config.toml",
+  "/supabase/migrations/**",
   "/railway/web/**",
 ]
 
 [deploy]
+# Applies pending supabase/migrations to `db` (over the private network) before
+# the new version goes live. If it fails, the deploy is aborted and the
+# previous version keeps serving. Needs DATABASE_URL (see railway/README.md).
+preDeployCommand = ["npm run db:migrate"]
 healthcheckPath = "/api/health-check"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

@@ -19,6 +19,11 @@ COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/node_modules ./node_modules
 
+# For `npm run db:migrate` (Railway pre-deploy): the Supabase CLI ships in
+# node_modules; it only needs the migrations and the project config.
+COPY --from=build /app/supabase/config.toml ./supabase/config.toml
+COPY --from=build /app/supabase/migrations ./supabase/migrations
+
 EXPOSE 3000
 
 CMD [ "npm", "run", "start" ]
