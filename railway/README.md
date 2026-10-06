@@ -39,14 +39,18 @@ service's variables are defined in [`/.railway/railway.ts`](../.railway/railway.
 (Railway Infrastructure as Code). Secrets are only referenced from it, via the
 shared variables from step 1.
 
-Needs Railway CLI 5.42.1+ and `npm install` (for the `railway` SDK). Then, from
-the repo root:
+The Railway CLI and SDK are devDependencies, so `npm install` is all that's
+needed. Then, from the repo root:
 
 ```sh
-railway link            # once: pick the project and environment
-railway config plan     # review the diff
-railway config apply
+npm run railway -- link   # once: pick the project and environment
+npm run infra:plan        # review the diff
+npm run infra:apply
 ```
+
+Use these instead of a global `railway config …`: on Windows the global CLI
+fails with a misleading "requires Railway CLI 5.42.1 or newer" (see
+`scripts/railway.mjs`).
 
 After the first apply, by hand in the Railway UI:
 

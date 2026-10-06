@@ -124,7 +124,6 @@ export default defineRailway((ctx) => {
     // Applies pending supabase/migrations to `db` before the new version goes
     // live. If it fails, the deploy is aborted and the previous version keeps
     // serving.
-    preDeploy: "npm run db:migrate",
     healthcheck: "/api/health-check",
     healthcheckTimeout: 120,
     deploy: restartPolicy,
