@@ -88,6 +88,9 @@ export default defineRailway((ctx) => {
     healthcheck: "/api/platform/profile",
     healthcheckTimeout: 120,
     env: {
+      // Railway injects PORT (8080) otherwise, overriding the Dockerfile's
+      // ENV PORT=3000 that kong's STUDIO_UPSTREAM expects.
+      PORT: "3000",
       POSTGRES_HOST: db.env.RAILWAY_PRIVATE_DOMAIN,
       POSTGRES_PASSWORD: shared.POSTGRES_PASSWORD,
       PG_META_CRYPTO_KEY: shared.PG_META_CRYPTO_KEY,
