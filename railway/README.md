@@ -19,7 +19,7 @@ internet ──► kong / (basic auth) ──► studio ──► meta ──►
 The app only uses PostgREST via the service-role key, so Supabase Auth,
 Storage, Realtime, Edge Functions and analytics are deliberately left out.
 
-> **Service names matter.** Variable references below (`${{db.…}}`) and the
+> **Service names matter.** Variable references in `.railway/railway.ts` (`${{db.…}}`) and the
 > Kong upstream defaults (`rest.railway.internal`, …) assume the services are
 > named exactly as in the table.
 
@@ -32,82 +32,53 @@ npm run keys:new
 Paste the printed block into **Project Settings → Shared Variables → Raw
 Editor**. Keep `DASHBOARD_USERNAME`/`DASHBOARD_PASSWORD` — that's the Studio login.
 
-## 2. Create the services
+## 2. Apply the infrastructure
 
-For each service: **New → GitHub Repo → this repo**, rename it, then in
-**Settings → Config-as-code** set the Railway config file to
-`/railway/<service>/railway.toml`. That file selects the Dockerfile, the watch
-paths and the healthcheck. Then paste its variables (step 3) into
-**Variables → Raw Editor**.
+Services, Dockerfiles, watch paths, healthchecks, the `db` volume and every
+service's variables are defined in [`/.railway/railway.ts`](../.railway/railway.ts)
+(Railway Infrastructure as Code). Secrets are only referenced from it, via the
+shared variables from step 1.
 
-Extra per-service settings:
+Needs Railway CLI 5.42.1+ and `npm install` (for the `railway` SDK). Then, from
+the repo root:
 
-- **db**: attach a **Volume** mounted at `/var/lib/postgresql/data`.
+```sh
+railway link            # once: pick the project and environment
+railway config plan     # review the diff
+railway config apply
+```
+
+After the first apply, by hand in the Railway UI:
+
+- **web**: set `DASHBOARD_PASSCODE`, `INGEST_BASIC_AUTH_USER` and
+  `INGEST_BASIC_AUTH_PASS` under **Variables**. `railway.ts` keeps whatever is
+  there (`preserve()`).
 - **web**: **Settings → Networking → Generate Domain** (port 3000).
 - **kong**: **Generate Domain** (port 8000).
 
 Deploy order on first boot doesn't matter much, but `db` must be up before
 `rest`/`meta` stop restarting.
 
-## 3. Variables per service
+Re-run `plan`/`apply` whenever `railway.ts` changes; pushing code alone does
+not apply infrastructure changes.
 
-Everything non-secret is baked into the Dockerfiles; only secrets and
-cross-service references live in Railway.
+### Moving existing services off `railway.toml`
 
-**db**
-```env
-POSTGRES_PASSWORD=${{shared.POSTGRES_PASSWORD}}
-PGPASSWORD=${{shared.POSTGRES_PASSWORD}}
-```
+The per-service `railway.toml` files are gone. Services that still point at
+one under **Settings → Config-as-code** must be detached before IaC manages
+them: clear that path on each service (or run `railway config migrate`) before
+the first `apply`.
 
-**rest**
-```env
-PGRST_DB_URI=postgres://authenticator:${{shared.POSTGRES_PASSWORD}}@${{db.RAILWAY_PRIVATE_DOMAIN}}:5432/postgres
-PGRST_JWT_SECRET=${{shared.JWT_SECRET}}
-```
+## 3. Migrations
 
-**meta**
-```env
-PG_META_DB_HOST=${{db.RAILWAY_PRIVATE_DOMAIN}}
-PG_META_DB_PASSWORD=${{shared.POSTGRES_PASSWORD}}
-CRYPTO_KEY=${{shared.PG_META_CRYPTO_KEY}}
-```
+The database starts empty (Supabase roles/schemas only). `web` runs
+`npm run db:migrate` as its pre-deploy command, which applies any pending
+`supabase/migrations` to `db` over the private network (`DATABASE_URL`). So
+pushing a new migration redeploys `web` and applies it. If a migration fails,
+the deploy is aborted and the previous version keeps serving.
 
-**studio**
-```env
-POSTGRES_HOST=${{db.RAILWAY_PRIVATE_DOMAIN}}
-POSTGRES_PASSWORD=${{shared.POSTGRES_PASSWORD}}
-PG_META_CRYPTO_KEY=${{shared.PG_META_CRYPTO_KEY}}
-STUDIO_PG_META_URL=http://${{meta.RAILWAY_PRIVATE_DOMAIN}}:8080
-SUPABASE_URL=http://${{kong.RAILWAY_PRIVATE_DOMAIN}}:8000
-SUPABASE_PUBLIC_URL=https://${{kong.RAILWAY_PUBLIC_DOMAIN}}
-SUPABASE_ANON_KEY=${{shared.ANON_KEY}}
-SUPABASE_SERVICE_KEY=${{shared.SERVICE_ROLE_KEY}}
-AUTH_JWT_SECRET=${{shared.JWT_SECRET}}
-```
-
-**kong**
-```env
-SUPABASE_ANON_KEY=${{shared.ANON_KEY}}
-SUPABASE_SERVICE_KEY=${{shared.SERVICE_ROLE_KEY}}
-DASHBOARD_USERNAME=${{shared.DASHBOARD_USERNAME}}
-DASHBOARD_PASSWORD=${{shared.DASHBOARD_PASSWORD}}
-```
-
-**web**
-```env
-PORT=3000
-SUPABASE_URL=http://${{kong.RAILWAY_PRIVATE_DOMAIN}}:8000
-SUPABASE_SERVICE_ROLE_KEY=${{shared.SERVICE_ROLE_KEY}}
-DASHBOARD_PASSCODE=<choose one>
-INGEST_BASIC_AUTH_USER=<choose one>
-INGEST_BASIC_AUTH_PASS=<choose one>
-```
-
-## 4. Apply migrations
-
-The database starts empty (Supabase roles/schemas only). Push this repo's
-`supabase/migrations` from your machine:
+To apply them by hand instead (e.g. with `--include-seed` to run
+`supabase/seed.sql`):
 
 1. **db → Settings → Networking → TCP Proxy** on port `5432`. Note the
    `host:port` Railway gives you.
@@ -117,9 +88,7 @@ The database starts empty (Supabase roles/schemas only). Push this repo's
    npx supabase db push --db-url "postgresql://postgres:<POSTGRES_PASSWORD>@<host>:<port>/postgres"
    ```
 
-   Add `--include-seed` to also run `supabase/seed.sql`.
-3. Optionally remove the TCP proxy again. Re-run step 2 whenever new
-   migrations are added.
+3. Optionally remove the TCP proxy again.
 
 ## Notes
 
