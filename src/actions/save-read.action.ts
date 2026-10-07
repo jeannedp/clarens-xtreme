@@ -20,10 +20,6 @@ export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveRea
     .select("reader_id, heartbeat_epc")
     .or(`reader_id.eq.${readerId},heartbeat_epc.eq.${epc}`)
     .maybeSingle();
-
-  console.log(readerId)
-  console.log(epc)
-  console.log(reader)
   
   if (readerError) {
     return { type: "error", message: readerError.message };
@@ -34,7 +30,6 @@ export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveRea
   }
   
   const isHeartbeat = reader.heartbeat_epc === epc;
-  console.log(isHeartbeat, reader.heartbeat_epc, epc);
 
   let deviceId: string | null = null;
   if (!isHeartbeat) {
