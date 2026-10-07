@@ -10,8 +10,8 @@ ENV HOSTNAME="::" \
     PGRST_DB_SCHEMAS=public,graphql_public \
     PGRST_DB_EXTRA_SEARCH_PATH=public \
     PGRST_DB_MAX_ROWS=1000 \
-    DEFAULT_ORGANIZATION_NAME="Clarens Xtreme" \
-    DEFAULT_PROJECT_NAME="Clarens Xtreme" \
+    DEFAULT_ORGANIZATION_NAME="Osiris Technical Systems" \
+    DEFAULT_PROJECT_NAME="Osiris Technical Systems" \
     ENABLED_FEATURES_LOGS_ALL=false \
     SNIPPETS_MANAGEMENT_FOLDER=/app/snippets
 

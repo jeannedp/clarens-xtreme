@@ -1,11 +1,3 @@
-// Railway infrastructure for this repo. See railway/README.md.
-//
-//   railway config plan    # diff against the linked environment
-//   railway config apply   # apply it
-//
-// Secrets live in the project's shared variables (`npm run keys:new`) and are
-// only referenced here. Values containing `${{…}}` are Railway reference
-// templates, resolved by Railway at deploy time.
 import {
   defineRailway,
   github,
@@ -24,7 +16,6 @@ const restartPolicy: DeployConfig = {
   restartPolicyMaxRetries: 10,
 };
 
-/** A service built from `railway/<name>/Dockerfile`, redeployed on changes under that folder. */
 function supabaseService(name: string) {
   return {
     source: repo,
@@ -40,7 +31,6 @@ function supabaseService(name: string) {
 export default defineRailway((ctx) => {
   const { shared } = ctx;
 
-  // Supabase Postgres. Init scripts in railway/db/init only run on an empty volume.
   const dbData = volume("db-data");
   const db = service("db", {
     ...supabaseService("db"),
@@ -51,7 +41,6 @@ export default defineRailway((ctx) => {
     },
   });
 
-  // PostgREST.
   const rest = service("rest", {
     ...supabaseService("rest"),
     env: {
@@ -60,7 +49,6 @@ export default defineRailway((ctx) => {
     },
   });
 
-  // postgres-meta (for Studio).
   const meta = service("meta", {
     ...supabaseService("meta"),
     env: {
@@ -70,8 +58,6 @@ export default defineRailway((ctx) => {
     },
   });
 
-  // API gateway: /rest/v1 for the app, basic-auth Studio on /.
-  // Its public domain is generated in the Railway UI (port 8000).
   const kong = service("kong", {
     ...supabaseService("kong"),
     env: {
@@ -82,14 +68,11 @@ export default defineRailway((ctx) => {
     },
   });
 
-  // Supabase Studio. Never give it a public domain; it's reached through kong.
   const studio = service("studio", {
     ...supabaseService("studio"),
     healthcheck: "/api/platform/profile",
     healthcheckTimeout: 120,
     env: {
-      // Railway injects PORT (8080) otherwise, overriding the Dockerfile's
-      // ENV PORT=3000 that kong's STUDIO_UPSTREAM expects.
       PORT: "3000",
       POSTGRES_HOST: db.env.RAILWAY_PRIVATE_DOMAIN,
       POSTGRES_PASSWORD: shared.POSTGRES_PASSWORD,
@@ -103,8 +86,6 @@ export default defineRailway((ctx) => {
     },
   });
 
-  // Next.js app (root Dockerfile). Its public domain is generated in the
-  // Railway UI (port 3000).
   const web = service("web", {
     source: repo,
     build: {
@@ -124,9 +105,6 @@ export default defineRailway((ctx) => {
         "/supabase/migrations/**",
       ],
     },
-    // Applies pending supabase/migrations to `db` before the new version goes
-    // live. If it fails, the deploy is aborted and the previous version keeps
-    // serving.
     preDeploy: "npm run db:migrate",
     healthcheck: "/api/health-check",
     healthcheckTimeout: 120,
@@ -136,14 +114,14 @@ export default defineRailway((ctx) => {
       SUPABASE_URL: "http://${{kong.RAILWAY_PRIVATE_DOMAIN}}:8000",
       SUPABASE_SERVICE_ROLE_KEY: shared.SERVICE_ROLE_KEY,
       DATABASE_URL: "postgresql://postgres:${{shared.POSTGRES_PASSWORD}}@${{db.RAILWAY_PRIVATE_DOMAIN}}:5432/postgres",
-      // Chosen per environment in the Railway UI; kept as-is on apply.
+      
       DASHBOARD_PASSCODE: preserve(),
       INGEST_BASIC_AUTH_USER: preserve(),
       INGEST_BASIC_AUTH_PASS: preserve(),
     },
   });
 
-  return project(ctx.projectName ?? "clarens-xtreme", {
+  return project(ctx.projectName ?? "osiris-technical-systems", {
     resources: [dbData, db, rest, meta, kong, studio, web],
   });
 });

@@ -1,9 +1,9 @@
-export const APP_TITLE = "Clarens Xtreme";
+export const APP_TITLE = "Osiris Technical Systems";
 export const APP_DESCRIPTION = "Device Tracker";
 
 //  Cookie
-export const COOKIE_NAME = 'cx_dash';
-export const APP_NAME = "clarens-xtreme";
+export const COOKIE_NAME = 'ost_dash';
+export const APP_NAME = "osiris-technical-systems";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 export const SESSION_AGE = 60 * 60 * 24 * 30; // 30 days
 

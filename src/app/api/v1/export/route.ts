@@ -89,16 +89,10 @@ export async function POST(request: NextRequest) {
     return File(
       csv, // BOM so Excel opens UTF-8 correctly
       "text/csv; charset=utf-8",
-      `clarens-xtreme-${dataset}-${stamp}.csv`,
+      `osiris-technical-systems-${dataset}-${stamp}.csv`,
     );
   }
 
-  /**
-   * 
-      `﻿${csv}`, // BOM so Excel opens UTF-8 correctly
-      "text/csv; charset=utf-8",
-      `clarens-xtreme-${dataset}-${stamp}.csv`,
-   */
   const wb = new ExcelJS.Workbook();
   wb.created = new Date();
 
@@ -118,7 +112,7 @@ export async function POST(request: NextRequest) {
   return File(
     buffer,
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    `clarens-xtreme-sessions-${stamp}.xlsx`,
+    `osiris-technical-systems-sessions-${stamp}.xlsx`,
   );
 }
 

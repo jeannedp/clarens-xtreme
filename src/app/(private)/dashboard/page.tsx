@@ -130,7 +130,7 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error(`Export failed (${res.status})`)
 
       const blob = await res.blob()
-      const filename = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? `clarens-xtreme-export.${fmt}`
+      const filename = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? `osiris-technical-systems-export.${fmt}`
 
       // Content-Disposition: attachment response, not a page — download the
       // blob and hand it to the browser's downloader without navigating.
