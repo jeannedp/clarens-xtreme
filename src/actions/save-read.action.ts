@@ -29,6 +29,7 @@ export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveRea
     return { type: "unknown_reader" };
   }
   
+  console.log('epc:', epc)
   const isHeartbeat = reader.heartbeat_epc === epc;
 
   let deviceId: string | null = null;
