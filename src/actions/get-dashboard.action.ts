@@ -53,12 +53,14 @@ export async function getDashboard({
   // save-read.action.ts sets reader_epc only on heartbeats, and leaves
   // device_id null when the epc isn't a registered device. Neither kind of
   // read has a device, so only the reader scope applies to these counts.
+  // Filter on received_at (server clock), not event_timestamp: the latter comes
+  // from the reader's datestamp, which may be missing (null) or off.
   const heartbeatCountQuery = supabase
     .from("tracking_logs")
     .select("*", { count: "exact", head: true })
     .not("reader_epc", "is", null)
-    .gte("event_timestamp", fromUtc)
-    .lte("event_timestamp", toUtc)
+    .gte("received_at", fromUtc)
+    .lte("received_at", toUtc)
     .in("reader_id", countReaderIds);
 
   const unknownCountQuery = supabase
@@ -66,8 +68,8 @@ export async function getDashboard({
     .select("*", { count: "exact", head: true })
     .is("reader_epc", null)
     .is("device_id", null)
-    .gte("event_timestamp", fromUtc)
-    .lte("event_timestamp", toUtc)
+    .gte("received_at", fromUtc)
+    .lte("received_at", toUtc)
     .in("reader_id", countReaderIds);
   //#endregion
 
