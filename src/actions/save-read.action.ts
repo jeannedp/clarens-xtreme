@@ -15,17 +15,20 @@ export interface SaveReadArgs {
 export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveReadArgs): Promise<SaveReadResult> {
   const supabase = createAdminClient();
 
-  const { data: readers, error: readerError } = await supabase
+  const { data: reader, error: readerError } = await supabase
     .from("readers")
     .select("reader_id, heartbeat_epc")
-    .or(`reader_id.eq.${readerId},heartbeat_epc.eq.${epc}`);
+    .or(`reader_id.eq.${readerId},heartbeat_epc.eq.${epc}`)
+    .maybeSingle();
 
+  console.log(readerId)
+  console.log(epc)
+  console.log(reader)
+  
   if (readerError) {
     return { type: "error", message: readerError.message };
   }
 
-  // Both conditions can match different rows; the reader_id match wins.
-  const reader = readers.find((r) => r.reader_id === readerId) ?? readers[0];
   if (!reader) {
     return { type: "unknown_reader" };
   }
