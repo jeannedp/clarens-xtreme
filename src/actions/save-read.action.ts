@@ -15,21 +15,21 @@ export interface SaveReadArgs {
 export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveReadArgs): Promise<SaveReadResult> {
   const supabase = createAdminClient();
 
-  const { data: reader, error: readerError } = await supabase
+  const { data: readers, error: readerError } = await supabase
     .from("readers")
     .select("reader_id, heartbeat_epc")
-    .eq("reader_id", readerId)
-    .maybeSingle();
+    .or(`reader_id.eq.${readerId},heartbeat_epc.eq.${epc}`);
 
   if (readerError) {
     return { type: "error", message: readerError.message };
   }
 
+  // Both conditions can match different rows; the reader_id match wins.
+  const reader = readers.find((r) => r.reader_id === readerId) ?? readers[0];
   if (!reader) {
     return { type: "unknown_reader" };
   }
   
-  console.log('epc:', epc)
   const isHeartbeat = reader.heartbeat_epc === epc;
 
   let deviceId: string | null = null;
