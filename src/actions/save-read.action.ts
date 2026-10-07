@@ -34,6 +34,7 @@ export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveRea
   }
   
   const isHeartbeat = reader.heartbeat_epc === epc;
+  console.log(isHeartbeat, reader.heartbeat_epc, epc);
 
   let deviceId: string | null = null;
   if (!isHeartbeat) {
