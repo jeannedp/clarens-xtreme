@@ -28,13 +28,15 @@ async function handleRead(request: NextRequest) {
 
   if (request.bodyUsed) {
     const json = await request.json();
-
+    console.log(json);
+    
     rfid = json["rfid"]?.trim();
     id = json["id"]?.trim();
     rssi = parseFloat(json["rssi"]?.trim() ?? "");
-    datestamp = Date.parse(json["datestamp"]?.trim() ?? "");    
+    datestamp = Date.parse(json["datestamp"]?.trim() ?? "");
   } else {
     const params = request.nextUrl.searchParams;
+    console.log(params);
 
     rfid = params.get("rfid")?.trim();
     id = params.get("id")?.trim();
