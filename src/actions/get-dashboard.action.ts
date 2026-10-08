@@ -67,6 +67,7 @@ export async function getDashboard({
     .from("tracking_logs")
     .select("*", { count: "exact", head: true })
     .is("reader_epc", null)
+    .is("device_id", null)
     .gte("received_at", fromUtc)
     .lte("received_at", toUtc)
     .in("reader_id", countReaderIds);
