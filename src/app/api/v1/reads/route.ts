@@ -56,7 +56,7 @@ async function handleRead(request: NextRequest) {
   if (errors.length > 0) {
     const errorLog = errors.join("\n");
     console.log(errorLog);
-    await logRejectedRead(request, errorLog);
+    await logReadEvent(request, errorLog);
     return BadRequest(errors);
   }
 
@@ -70,12 +70,13 @@ async function handleRead(request: NextRequest) {
 
     switch (type) {
       case "error":
+        await logReadEvent(request, message ?? 'Internal Server Error');
         return ServerError(message);
 
       case "unknown_reader":
-        const reason = `Unknown reader id "${id}"`;
-        await logRejectedRead(request, reason + '\n' + message);
-        return BadRequest([reason, message]);
+      case "unknown_device":
+        await logReadEvent(request, message);
+        return BadRequest(message);
 
       case "stored":
       case "heartbeat":
@@ -86,7 +87,7 @@ async function handleRead(request: NextRequest) {
   }
 }
 
-async function logRejectedRead(request: NextRequest, message: string) {
+async function logReadEvent(request: NextRequest, message: string) {
   try {
     const headers: Record<string, string> = {};    
     request.headers.forEach((value, key) => {

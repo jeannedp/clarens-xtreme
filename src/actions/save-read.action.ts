@@ -1,8 +1,8 @@
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export type SaveReadResult = {
-  type:  "stored" | "heartbeat" | "unknown_reader" | "error";
-  message?: string;
+  type:  "stored" | "heartbeat" | "unknown_device" | "unknown_reader" | "error";
+  message: string;
 };
 
 export interface SaveReadArgs {
@@ -26,12 +26,12 @@ export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveRea
   }
 
   if (!reader) {
-    return { type: "unknown_reader" };
+    return { type: "unknown_reader", message: `Reader with ids "${readerId}" of "${epc}" not found in the system` };
   }
   
   const isHeartbeat = reader.heartbeat_epc === epc;
-
   let deviceId: string | null = null;
+
   if (!isHeartbeat) {
     const { data: device, error: deviceError } = await supabase
       .from("devices")
@@ -54,7 +54,16 @@ export async function saveRead({ epc, readerId, readerTimestamp, rssi }: SaveRea
     event_timestamp: readerTimestamp,
   });
 
-  return insertError
-    ? { type: "error", message: insertError.message }
-    : { type: isHeartbeat ? "heartbeat" : "stored" };
+  if (insertError) {
+    return { type: "error", message: insertError.message }
+  }
+
+  if (!isHeartbeat && deviceId === null) {
+    return { type: "unknown_device", message: `Device with id "${epc}" not found in the system` };
+  }
+
+  return { 
+    type: isHeartbeat ? "heartbeat" : "stored", 
+    message: isHeartbeat ? "Heartbeat" : "Stored"
+  };
 }
