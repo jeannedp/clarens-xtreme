@@ -4,43 +4,53 @@ import { BadRequest, OK, ServerError, Unauthorized } from "@/utils/response";
 import { NextRequest } from "next/server";
 import { isApiAuthorized } from '@/lib/auth';
 
+interface RequestModel {
+  rfid: string | undefined;
+  id: string | undefined;
+  rssi: number;
+  datestamp: number;
+}
+
 export async function GET(request: NextRequest) {
-  return handleRead(request);
+  const params = request.nextUrl.searchParams;
+
+  const rfid = params.get("rfid")?.trim();
+  const id = params.get("id")?.trim();
+  const rssi = parseFloat(params.get("rssi")?.trim() ?? "");``
+  const datestamp = Date.parse(params.get("datestamp")?.trim() ?? "");
+
+  return handleRead(request, { rfid, id, rssi, datestamp });
 }
 
 export async function POST(request: NextRequest) {
-  return handleRead(request);
+  const json = await request.json();
+  
+  const rfid = json["rfid"]?.trim();
+  const id = json["id"]?.trim();
+  const rssi = parseFloat(json["rssi"]?.trim() ?? "");
+  const datestamp = Date.parse(json["datestamp"]?.trim() ?? "");
+
+  return handleRead(request, { rfid, id, rssi, datestamp });
 }
 
 export async function PUT(request: NextRequest) {
-  return handleRead(request);
+  const json = await request.json();
+  
+  const rfid = json["rfid"]?.trim();
+  const id = json["id"]?.trim();
+  const rssi = parseFloat(json["rssi"]?.trim() ?? "");
+  const datestamp = Date.parse(json["datestamp"]?.trim() ?? "");
+
+  return handleRead(request, { rfid, id, rssi, datestamp });
 }
 
-async function handleRead(request: NextRequest) {
+async function handleRead(
+  request: NextRequest, 
+  { rfid, id, rssi, datestamp }: RequestModel
+) {
   if (!isApiAuthorized(request)) {
     return Unauthorized();
-  }
-  
-  let rfid: string | undefined;
-  let id: string | undefined;
-  let rssi: number;
-  let datestamp: number;
-
-  if (request.bodyUsed) {
-    const json = await request.json();
-    
-    rfid = json["rfid"]?.trim();
-    id = json["id"]?.trim();
-    rssi = parseFloat(json["rssi"]?.trim() ?? "");
-    datestamp = Date.parse(json["datestamp"]?.trim() ?? "");
-  } else {
-    const params = request.nextUrl.searchParams;
-
-    rfid = params.get("rfid")?.trim();
-    id = params.get("id")?.trim();
-    rssi = parseFloat(params.get("rssi")?.trim() ?? "");
-    datestamp = Date.parse(params.get("datestamp")?.trim() ?? "");
-  }
+  }  
 
   const errors: string[] = [];
   if (!rfid) {
@@ -55,7 +65,7 @@ async function handleRead(request: NextRequest) {
 
   if (errors.length > 0) {
     const errorLog = errors.join("\n");
-    console.log(errorLog);
+    console.error(errorLog);
     await logReadEvent(request, errorLog);
     return BadRequest(errors);
   }
