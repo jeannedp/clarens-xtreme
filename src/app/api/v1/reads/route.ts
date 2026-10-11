@@ -4,53 +4,43 @@ import { BadRequest, OK, ServerError, Unauthorized } from "@/utils/response";
 import { NextRequest } from "next/server";
 import { isApiAuthorized } from '@/lib/auth';
 
-interface RequestModel {
-  rfid: string | undefined;
-  id: string | undefined;
-  rssi: number;
-  datestamp: number;
-}
-
 export async function GET(request: NextRequest) {
-  const params = request.nextUrl.searchParams;
-
-  const rfid = params.get("rfid")?.trim();
-  const id = params.get("id")?.trim();
-  const rssi = parseFloat(params.get("rssi")?.trim() ?? "");``
-  const datestamp = Date.parse(params.get("datestamp")?.trim() ?? "");
-
-  return handleRead(request, { rfid, id, rssi, datestamp });
+  return await handleRead(request);
 }
 
 export async function POST(request: NextRequest) {
-  const json = await request.json();
-  
-  const rfid = json["rfid"]?.trim();
-  const id = json["id"]?.trim();
-  const rssi = parseFloat(json["rssi"]?.trim() ?? "");
-  const datestamp = Date.parse(json["datestamp"]?.trim() ?? "");
-
-  return handleRead(request, { rfid, id, rssi, datestamp });
+  return await handleRead(request);
 }
 
 export async function PUT(request: NextRequest) {
-  const json = await request.json();
-  
-  const rfid = json["rfid"]?.trim();
-  const id = json["id"]?.trim();
-  const rssi = parseFloat(json["rssi"]?.trim() ?? "");
-  const datestamp = Date.parse(json["datestamp"]?.trim() ?? "");
-
-  return handleRead(request, { rfid, id, rssi, datestamp });
+  return await handleRead(request);
 }
 
-async function handleRead(
-  request: NextRequest, 
-  { rfid, id, rssi, datestamp }: RequestModel
-) {
+async function handleRead(request: NextRequest) {
   if (!isApiAuthorized(request)) {
     return Unauthorized();
-  }  
+  }
+  
+  let rfid: string | undefined;
+  let id: string | undefined;
+  let rssi: number | undefined;
+  let datestamp: number | undefined;
+
+  if (request.bodyUsed) {
+    const json = await request.json();
+    
+    rfid = json["rfid"]?.trim();
+    id = json["id"]?.trim();
+    rssi = parseFloat(json["rssi"]?.trim() ?? "");
+    datestamp = Date.parse(json["datestamp"]?.trim() ?? "");
+  } else {
+    const params = request.nextUrl.searchParams;
+
+    rfid = params.get("rfid")?.trim();
+    id = params.get("id")?.trim();
+    rssi = parseFloat(params.get("rssi")?.trim() ?? "");``
+    datestamp = Date.parse(params.get("datestamp")?.trim() ?? "");
+  }
 
   const errors: string[] = [];
   if (!rfid) {
@@ -112,7 +102,7 @@ async function logReadEvent(request: NextRequest, message: string) {
       description: 'Failed to persist rejected read.\n' + message,
       headers,
       query: request.nextUrl.search,
-      body: await request.json(),
+      body: request.bodyUsed ? await request.json() : {},
     });
   } catch (err) {
     console.error("reads: ", err);
