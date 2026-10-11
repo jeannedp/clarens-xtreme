@@ -1,3 +1,5 @@
+"use server";
+
 import { createAdminClient } from "@/utils/supabase/admin";
 
 export type SaveReadResult = {
