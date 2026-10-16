@@ -26,9 +26,24 @@ async function handleRead(request: NextRequest) {
   let rssi: number | undefined;
   let datestamp: number | undefined;
 
+  {
+    const headers: Record<string, string> = {};    
+    request.headers.forEach((value, key) => {
+      if (key.toLowerCase() !== "authorization") {
+        headers[key] = value;
+      }
+    });
+    console.log({
+      type: 'info',
+      source: '/api/v1/read',
+      headers,
+      query: request.nextUrl.search,
+      body: request.bodyUsed ? await request.json() : {},
+    });
+  }
+
   if (request.bodyUsed) {
     const json = await request.json();
-    console.log(json);
     
     rfid = json["rfid"]?.trim();
     id = json["id"]?.trim();
