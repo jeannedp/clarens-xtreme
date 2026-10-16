@@ -28,6 +28,7 @@ async function handleRead(request: NextRequest) {
 
   if (request.bodyUsed) {
     const json = await request.json();
+    console.log(json);
     
     rfid = json["rfid"]?.trim();
     id = json["id"]?.trim();
